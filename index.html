@@ -158,10 +158,10 @@
 
     <div class="stats" id="statsLine"></div>
 
-    <h2>جميع المسافات</h2>
+    <h2>جميع الأماكن</h2>
 
     <div class="list-toolbar">
-        <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم (Chargement / Dechargement)...">
+        <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم...">
         <button class="btn" id="btnClearSearch">مسح</button>
     </div>
 
@@ -169,14 +169,11 @@
         <table class="list-table">
             <thead>
                 <tr>
-                    <th>Code Chargement</th>
-                    <th>Chargement</th>
-                    <th>Code Dechargement</th>
-                    <th>Dechargement</th>
-                    <th>KM</th>
+                    <th>Code</th>
+                    <th>المكان</th>
                 </tr>
             </thead>
-            <tbody id="listBody"><tr><td colspan="5" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
+            <tbody id="listBody"><tr><td colspan="2" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
         </table>
     </div>
 
@@ -279,15 +276,20 @@ document.getElementById('distanceForm').addEventListener('submit', function(e){
     }
 });
 
-// ---------- تبويب عرض جميع المسافات ----------
+// ---------- تبويب عرض جميع الأماكن ----------
 const listBody = document.getElementById('listBody');
 const listInfo = document.getElementById('listInfo');
 const paginationBox = document.getElementById('paginationBox');
 const listSearch = document.getElementById('listSearch');
 const btnClearSearch = document.getElementById('btnClearSearch');
 
+// بناء قائمة الأماكن (Code + الاسم) من كائن codeNames، مرتبة حسب الكود
+const places = Object.keys(codeNames)
+    .map(function(code){ return [code, codeNames[code]]; })
+    .sort(function(x, y){ return x[0].localeCompare(y[0]); });
+
 const PAGE_SIZE = 50;
-let filteredRecords = records;
+let filteredPlaces = places;
 let currentPage = 1;
 
 function escapeHtml(str){
@@ -299,16 +301,11 @@ function escapeHtml(str){
 function applyFilter(query){
     query = (query || '').trim().toLowerCase();
     if(!query){
-        filteredRecords = records;
+        filteredPlaces = places;
     } else {
-        filteredRecords = records.filter(function(r){
-            const a = r[0], b = r[1];
-            const nameA = (codeNames[a] || '').toLowerCase();
-            const nameB = (codeNames[b] || '').toLowerCase();
-            return a.toLowerCase().includes(query) ||
-                   b.toLowerCase().includes(query) ||
-                   nameA.includes(query) ||
-                   nameB.includes(query);
+        filteredPlaces = places.filter(function(p){
+            const code = p[0], name = (p[1] || '').toLowerCase();
+            return code.toLowerCase().includes(query) || name.includes(query);
         });
     }
     currentPage = 1;
@@ -316,32 +313,29 @@ function applyFilter(query){
 }
 
 function renderList(){
-    const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
     if(currentPage > totalPages) currentPage = totalPages;
     if(currentPage < 1) currentPage = 1;
 
     const startIdx = (currentPage - 1) * PAGE_SIZE;
-    const pageItems = filteredRecords.slice(startIdx, startIdx + PAGE_SIZE);
+    const pageItems = filteredPlaces.slice(startIdx, startIdx + PAGE_SIZE);
 
     if(pageItems.length === 0){
-        listBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
+        listBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
     } else {
         let rowsHtml = '';
-        pageItems.forEach(function(r){
-            const a = r[0], b = r[1], km = r[2];
+        pageItems.forEach(function(p){
+            const code = p[0], name = p[1];
             rowsHtml += "<tr>" +
-                "<td>" + escapeHtml(a) + "</td>" +
-                "<td>" + escapeHtml(codeNames[a] || '') + "</td>" +
-                "<td>" + escapeHtml(b) + "</td>" +
-                "<td>" + escapeHtml(codeNames[b] || '') + "</td>" +
-                "<td>" + km + "</td>" +
+                "<td>" + escapeHtml(code) + "</td>" +
+                "<td>" + escapeHtml(name || '') + "</td>" +
                 "</tr>";
         });
         listBody.innerHTML = rowsHtml;
     }
 
-    listInfo.textContent = 'عرض ' + (filteredRecords.length === 0 ? 0 : startIdx + 1) + ' إلى ' +
-        Math.min(startIdx + PAGE_SIZE, filteredRecords.length) + ' من أصل ' + filteredRecords.length + ' سجل';
+    listInfo.textContent = 'عرض ' + (filteredPlaces.length === 0 ? 0 : startIdx + 1) + ' إلى ' +
+        Math.min(startIdx + PAGE_SIZE, filteredPlaces.length) + ' من أصل ' + filteredPlaces.length + ' مكان';
 
     renderPagination(currentPage, totalPages);
 }
