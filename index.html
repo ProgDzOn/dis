@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حساب المسافة - عرض جميع المسافات</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        color: #fff;
+        background: #000;
+        font-family: "Lucida Grande", Tahoma, Verdana, Arial, sans-serif;
+        font-size: 14px;
+        padding: 20px;
+    }
+    .wrap { max-width: 900px; margin: auto; }
+    h1 { text-align: center; margin-bottom: 6px; }
+    .subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 20px; }
+    h2 { font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 34px; }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        padding: 10px;
+        border: 1px solid #fff;
+        text-align: center;
+    }
+    th { background-color: #444; }
+    form { margin-top: 20px; }
+    input[type="text"], input[type="search"] {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #fff;
+        background: #222;
+        color: #fff;
+        text-align: center;
+    }
+    .code-name {
+        font-size: 11px;
+        color: #7bd0ff;
+        min-height: 14px;
+        margin-top: 4px;
+    }
+    input[type="submit"], .btn {
+        padding: 7px 24px;
+        background: #444;
+        color: #fff;
+        border: 1px solid #666;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 14px;
+    }
+    input[type="submit"]:hover, .btn:hover { background: #555; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status {
+        margin: 16px 0;
+        font-size: 13px;
+        padding: 10px 12px;
+        border-radius: 4px;
+        display: none;
+    }
+    .status.error { background: #3a1515; color: #ff9a9a; display: block; border: 1px solid #6a2a2a; }
+    .status.ok { background: #12301c; color: #8fe3a2; display: block; border: 1px solid #245c34; }
+    .status.warn { background: #3a2f15; color: #f0cf8a; display: block; border: 1px solid #6a5a2a; }
+
+    .result-box {
+        display: none;
+        text-align: center;
+        background: #111;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 20px;
+        margin-top: 10px;
+    }
+    .result-box .big-distance { font-size: 34px; font-weight: bold; color: #4fc3f7; margin: 6px 0; }
+    .result-box .sub { font-size: 13px; color: #aaa; }
+
+    .stats { text-align: center; font-size: 11px; color: #666; margin-top: 8px; }
+
+    .list-toolbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .list-toolbar input[type=search] { flex: 1; min-width: 200px; }
+
+    table.list-table { font-size: 13px; }
+    table.list-table th { background: #333; }
+    table.list-table tbody tr:nth-child(odd) { background: #0d0d0d; }
+    table.list-table tbody tr:nth-child(even) { background: #161616; }
+    table.list-table td { border-color: #333; }
+
+    .footer-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .pagination { display: flex; gap: 4px; flex-wrap: wrap; }
+    .pagination button {
+        background: #222;
+        color: #ccc;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .pagination button.active { background: #2d7dd2; color: #fff; border-color: #2d7dd2; }
+    .pagination button:hover:not(.active):not(:disabled) { background: #333; }
+    .info-text { font-size: 12px; color: #999; }
+    .loading-msg { text-align:center; color:#888; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>حساب المسافة</h1>
+    <div class="subtitle">بحث فوري وعرض كامل لبيانات المسافات (بدون اتصال بالسيرفر)</div>
+
+    <form id="distanceForm">
+        <table>
+            <tr>
+                <th>Code Chargement</th>
+                <th>Code Dechargement</th>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" id="lieu_d" name="lieu_d" list="codesList" autocomplete="off" placeholder="مثال: 101001">
+                    <div class="code-name" id="nameD"></div>
+                </td>
+                <td>
+                    <input type="text" id="lieu_c" name="lieu_c" list="codesList" autocomplete="off" placeholder="مثال: 101003">
+                    <div class="code-name" id="nameC"></div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"><input type="submit" value="ok"></td>
+            </tr>
+        </table>
+    </form>
+
+    <datalist id="codesList"></datalist>
+
+    <div id="status" class="status"></div>
+
+    <div id="resultBox" class="result-box">
+        <div class="sub">المسافة بين <b id="rLieuD"></b> و <b id="rLieuC"></b></div>
+        <div class="big-distance"><span id="rDistance">--</span> Km</div>
+    </div>
+
+    <div class="stats" id="statsLine"></div>
+
+    <h2>جميع المسافات</h2>
+
+    <div class="list-toolbar">
+        <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم (Chargement / Dechargement)...">
+        <button class="btn" id="btnClearSearch">مسح</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="list-table">
+            <thead>
+                <tr>
+                    <th>Code Chargement</th>
+                    <th>Chargement</th>
+                    <th>Code Dechargement</th>
+                    <th>Dechargement</th>
+                    <th>KM</th>
+                </tr>
+            </thead>
+            <tbody id="listBody"><tr><td colspan="5" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="footer-row">
+        <div class="info-text" id="listInfo"></div>
+        <div class="pagination" id="paginationBox"></div>
+    </div>
+</div>
+
+<!-- ملف البيانات منفصل: يحتوي على codeNamesArr و records -->
+<script src="data.js"></script>
+<script>
+
+const codeNames = {};
+codeNamesArr.forEach(function(item){ codeNames[item[0]] = item[1]; });
+
+const distanceMap = {};
+records.forEach(function(r){
+    distanceMap[r[0] + '|' + r[1]] = r[2];
+});
+
+// ---------- تبويب البحث عن مسافة بين كودين ----------
+const datalist = document.getElementById('codesList');
+let dlHtml = '';
+codeNamesArr.forEach(function(item){
+    dlHtml += "<option value='" + item[0] + "'>" + item[0] + " - " + item[1] + "</option>";
+});
+datalist.innerHTML = dlHtml;
+
+document.getElementById('statsLine').textContent =
+    'قاعدة البيانات: ' + records.length + ' مسار بين ' + codeNamesArr.length + ' موقع';
+
+const lieuD = document.getElementById('lieu_d');
+const lieuC = document.getElementById('lieu_c');
+const nameD = document.getElementById('nameD');
+const nameC = document.getElementById('nameC');
+const statusDiv = document.getElementById('status');
+const resultBox = document.getElementById('resultBox');
+const rDistance = document.getElementById('rDistance');
+const rLieuD = document.getElementById('rLieuD');
+const rLieuC = document.getElementById('rLieuC');
+
+function setStatus(type, msg){
+    if(!type){ statusDiv.style.display = 'none'; return; }
+    statusDiv.className = 'status ' + type;
+    statusDiv.textContent = msg;
+}
+
+function showNameHint(input, target){
+    const v = input.value.trim();
+    target.textContent = codeNames[v] ? codeNames[v] : '';
+}
+
+lieuD.addEventListener('input', function(){ showNameHint(lieuD, nameD); });
+lieuC.addEventListener('input', function(){ showNameHint(lieuC, nameC); });
+
+document.getElementById('distanceForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    resultBox.style.display = 'none';
+
+    const a = lieuD.value.trim();
+    const b = lieuC.value.trim();
+
+    if(!a || !b){
+        setStatus('error', 'الرجاء إدخال كودي التحميل والتفريغ.');
+        return;
+    }
+
+    let km = distanceMap[a + '|' + b];
+    let reversed = false;
+
+    if(km === undefined){
+        km = distanceMap[b + '|' + a];
+        reversed = true;
+    }
+
+    if(km === undefined){
+        setStatus('error', 'لا توجد بيانات مسافة مسجّلة بين هذين الكودين في قاعدة البيانات.');
+        return;
+    }
+
+    rLieuD.textContent = a + (codeNames[a] ? ' - ' + codeNames[a] : '');
+    rLieuC.textContent = b + (codeNames[b] ? ' - ' + codeNames[b] : '');
+    rDistance.textContent = km;
+    resultBox.style.display = 'block';
+
+    if(reversed){
+        setStatus('warn', 'تنبيه: لا يوجد سجل مباشر لهذا الاتجاه، تم عرض مسافة الاتجاه المعاكس (' + b + ' → ' + a + ').');
+    } else {
+        setStatus('ok', 'تم العثور على المسافة.');
+    }
+});
+
+// ---------- تبويب عرض جميع المسافات ----------
+const listBody = document.getElementById('listBody');
+const listInfo = document.getElementById('listInfo');
+const paginationBox = document.getElementById('paginationBox');
+const listSearch = document.getElementById('listSearch');
+const btnClearSearch = document.getElementById('btnClearSearch');
+
+const PAGE_SIZE = 50;
+let filteredRecords = records;
+let currentPage = 1;
+
+function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function applyFilter(query){
+    query = (query || '').trim().toLowerCase();
+    if(!query){
+        filteredRecords = records;
+    } else {
+        filteredRecords = records.filter(function(r){
+            const a = r[0], b = r[1];
+            const nameA = (codeNames[a] || '').toLowerCase();
+            const nameB = (codeNames[b] || '').toLowerCase();
+            return a.toLowerCase().includes(query) ||
+                   b.toLowerCase().includes(query) ||
+                   nameA.includes(query) ||
+                   nameB.includes(query);
+        });
+    }
+    currentPage = 1;
+    renderList();
+}
+
+function renderList(){
+    const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    if(currentPage < 1) currentPage = 1;
+
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filteredRecords.slice(startIdx, startIdx + PAGE_SIZE);
+
+    if(pageItems.length === 0){
+        listBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
+    } else {
+        let rowsHtml = '';
+        pageItems.forEach(function(r){
+            const a = r[0], b = r[1], km = r[2];
+            rowsHtml += "<tr>" +
+                "<td>" + escapeHtml(a) + "</td>" +
+                "<td>" + escapeHtml(codeNames[a] || '') + "</td>" +
+                "<td>" + escapeHtml(b) + "</td>" +
+                "<td>" + escapeHtml(codeNames[b] || '') + "</td>" +
+                "<td>" + km + "</td>" +
+                "</tr>";
+        });
+        listBody.innerHTML = rowsHtml;
+    }
+
+    listInfo.textContent = 'عرض ' + (filteredRecords.length === 0 ? 0 : startIdx + 1) + ' إلى ' +
+        Math.min(startIdx + PAGE_SIZE, filteredRecords.length) + ' من أصل ' + filteredRecords.length + ' سجل';
+
+    renderPagination(currentPage, totalPages);
+}
+
+function renderPagination(current, totalPages){
+    let html = '';
+    html += "<button " + (current<=1?'disabled':'') + " onclick='goToPage(" + (current-1) + ")'>&laquo; Préc</button>";
+
+    const start = Math.max(1, current - 2);
+    const end = Math.min(totalPages, current + 2);
+    for(let p = start; p <= end; p++){
+        html += "<button class='" + (p===current?'active':'') + "' onclick='goToPage(" + p + ")'>" + p + "</button>";
+    }
+
+    html += "<button " + (current>=totalPages?'disabled':'') + " onclick='goToPage(" + (current+1) + ")'>Suiv &raquo;</button>";
+    paginationBox.innerHTML = html;
+}
+
+function goToPage(p){
+    currentPage = p;
+    renderList();
+}
+
+listSearch.addEventListener('input', function(){
+    applyFilter(listSearch.value);
+});
+btnClearSearch.addEventListener('click', function(){
+    listSearch.value = '';
+    applyFilter('');
+});
+
+renderList();
+</script>
+</body>
+</html>
