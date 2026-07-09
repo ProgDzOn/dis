@@ -191,7 +191,16 @@
 <script>
 
 const codeNames = {};
-codeNamesArr.forEach(function(item){ codeNames[item[0]] = item[1]; });
+// أسماء الأماكن التفصيلية (أكواد من 6 أرقام) من مصفوفة lieu
+if(typeof lieu !== 'undefined'){
+    lieu.forEach(function(item){
+        if(item[1]) codeNames[item[0]] = item[1];
+    });
+}
+// أسماء المناطق العامة من codeNamesArr (لا تُستبدل الأسماء التفصيلية إن وُجدت مسبقاً)
+codeNamesArr.forEach(function(item){
+    if(!codeNames[item[0]]) codeNames[item[0]] = item[1];
+});
 
 const distanceMap = {};
 records.forEach(function(r){
@@ -201,13 +210,13 @@ records.forEach(function(r){
 // ---------- تبويب البحث عن مسافة بين كودين ----------
 const datalist = document.getElementById('codesList');
 let dlHtml = '';
-codeNamesArr.forEach(function(item){
-    dlHtml += "<option value='" + item[0] + "'>" + item[0] + " - " + item[1] + "</option>";
+Object.keys(codeNames).forEach(function(code){
+    dlHtml += "<option value='" + code + "'>" + code + " - " + codeNames[code] + "</option>";
 });
 datalist.innerHTML = dlHtml;
 
 document.getElementById('statsLine').textContent =
-    'قاعدة البيانات: ' + records.length + ' مسار بين ' + codeNamesArr.length + ' موقع';
+    'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
 
 const lieuD = document.getElementById('lieu_d');
 const lieuC = document.getElementById('lieu_c');
