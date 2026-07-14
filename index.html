@@ -118,74 +118,178 @@
     .pagination button:hover:not(.active):not(:disabled) { background: #333; }
     .info-text { font-size: 12px; color: #999; }
     .loading-msg { text-align:center; color:#888; padding: 20px; }
+
+    .add-place-box {
+        background: #111;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 16px;
+        margin-top: 10px;
+    }
+    .add-place-box table { margin-bottom: 0; }
+    .add-place-box th { background: #333; }
+    .add-place-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .badge-custom {
+        display: inline-block;
+        font-size: 10px;
+        color: #4fc3f7;
+        border: 1px solid #245c74;
+        border-radius: 3px;
+        padding: 1px 5px;
+        margin-inline-start: 6px;
+    }
+
+    .tab-nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 12px;
+    }
+    .tab-nav button {
+        background: #161616;
+        color: #ccc;
+        border: 1px solid #444;
+        border-radius: 20px;
+        padding: 8px 18px;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .tab-nav button:hover { background: #222; }
+    .tab-nav button.active {
+        background: #2d7dd2;
+        color: #fff;
+        border-color: #2d7dd2;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 </style>
+
 </head>
 <body>
 <div class="wrap">
     <h1>حساب المسافة</h1>
     <div class="subtitle">بحث فوري وعرض كامل لبيانات المسافات (بدون اتصال بالسيرفر)</div>
 
-    <form id="distanceForm">
-        <table>
-            <tr>
-                <th>Code Chargement</th>
-                <th>Code Dechargement</th>
-            </tr>
-            <tr>
-                <td>
-                    <input type="text" id="lieu_d" name="lieu_d" list="codesList" autocomplete="off" placeholder="مثال: 101001">
-                    <div class="code-name" id="nameD"></div>
-                </td>
-                <td>
-                    <input type="text" id="lieu_c" name="lieu_c" list="codesList" autocomplete="off" placeholder="مثال: 101003">
-                    <div class="code-name" id="nameC"></div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2"><input type="submit" value="ok"></td>
-            </tr>
-        </table>
-    </form>
+    <div class="tab-nav">
+        <button type="button" class="tab-btn active" data-tab="tab-distance">حساب المسافة</button>
+        <button type="button" class="tab-btn" data-tab="tab-add">إضافة مكان جديد</button>
+        <button type="button" class="tab-btn" data-tab="tab-list">عرض الأماكن والتعديل</button>
+    </div>
 
     <datalist id="codesList"></datalist>
 
-    <div id="status" class="status"></div>
-
-    <div id="resultBox" class="result-box">
-        <div class="sub">المسافة بين <b id="rLieuD"></b> و <b id="rLieuC"></b></div>
-        <div class="big-distance"><span id="rDistance">--</span> Km</div>
-    </div>
-
-    <div class="stats" id="statsLine"></div>
-
-    <h2>جميع الأماكن</h2>
-
-    <div class="list-toolbar">
-        <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم...">
-        <button class="btn" id="btnClearSearch">مسح</button>
-    </div>
-
-    <div style="overflow-x:auto;">
-        <table class="list-table">
-            <thead>
+    <!-- ============ القسم 1: حساب المسافة ============ -->
+    <div class="tab-panel active" id="tab-distance">
+        <form id="distanceForm">
+            <table>
                 <tr>
-                    <th>Code</th>
-                    <th>المكان</th>
+                    <th>Code Chargement</th>
+                    <th>Code Dechargement</th>
                 </tr>
-            </thead>
-            <tbody id="listBody"><tr><td colspan="2" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
-        </table>
+                <tr>
+                    <td>
+                        <input type="text" id="lieu_d" name="lieu_d" list="codesList" autocomplete="off" placeholder="مثال: 101001">
+                        <div class="code-name" id="nameD"></div>
+                    </td>
+                    <td>
+                        <input type="text" id="lieu_c" name="lieu_c" list="codesList" autocomplete="off" placeholder="مثال: 101003">
+                        <div class="code-name" id="nameC"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"><input type="submit" value="ok"></td>
+                </tr>
+            </table>
+        </form>
+
+        <div id="status" class="status"></div>
+
+        <div id="resultBox" class="result-box">
+            <div class="sub">المسافة بين <b id="rLieuD"></b> و <b id="rLieuC"></b></div>
+            <div class="big-distance"><span id="rDistance">--</span> Km</div>
+        </div>
+
+        <div class="stats" id="statsLine"></div>
     </div>
 
-    <div class="footer-row">
-        <div class="info-text" id="listInfo"></div>
-        <div class="pagination" id="paginationBox"></div>
+    <!-- ============ القسم 2: إضافة مكان جديد ============ -->
+    <div class="tab-panel" id="tab-add">
+        <h2 id="addPlaceTitle">إضافة مكان جديد</h2>
+        <div class="add-place-box">
+            <form id="addPlaceForm">
+                <table>
+                    <tr>
+                        <th>Code (رقم المكان)</th>
+                        <th>اسم المكان</th>
+                    </tr>
+                    <tr>
+                        <td><input type="text" id="newCode" name="newCode" autocomplete="off" placeholder="مثال: 101099"></td>
+                        <td><input type="text" id="newName" name="newName" autocomplete="off" placeholder="اسم المكان"></td>
+                    </tr>
+                </table>
+                <div class="add-place-actions">
+                    <button type="button" class="btn" id="btnCancelEdit" style="display:none;">إلغاء التعديل</button>
+                    <button type="submit" class="btn" id="btnSubmitPlace">إضافة المكان</button>
+                </div>
+            </form>
+            <div id="addPlaceStatus" class="status"></div>
+        </div>
+    </div>
+
+    <!-- ============ القسم 3: عرض الأماكن والتعديل ============ -->
+    <div class="tab-panel" id="tab-list">
+        <h2>جميع الأماكن</h2>
+
+        <div class="list-toolbar">
+            <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم...">
+            <button class="btn" id="btnClearSearch">مسح</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>المكان</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody"><tr><td colspan="3" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
+            </table>
+        </div>
+
+        <div class="footer-row">
+            <div class="info-text" id="listInfo"></div>
+            <div class="pagination" id="paginationBox"></div>
+        </div>
     </div>
 </div>
 
 <!-- ملف البيانات منفصل: يحتوي على codeNamesArr و records -->
 <script src="data.js"></script>
 <script>
+
+// ---------- التبديل بين التبويبات (الأقسام الثلاثة) ----------
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+
+function switchTab(tabId){
+    tabPanels.forEach(function(panel){
+        panel.classList.toggle('active', panel.id === tabId);
+    });
+    tabButtons.forEach(function(btn){
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+    });
+}
+
+tabButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+        switchTab(btn.getAttribute('data-tab'));
+    });
+});
 
 const codeNames = {};
 // أسماء الأماكن التفصيلية (أكواد من 6 أرقام) من مصفوفة lieu
@@ -197,6 +301,33 @@ if(typeof lieu !== 'undefined'){
 // أسماء المناطق العامة من codeNamesArr (لا تُستبدل الأسماء التفصيلية إن وُجدت مسبقاً)
 codeNamesArr.forEach(function(item){
     if(!codeNames[item[0]]) codeNames[item[0]] = item[1];
+});
+
+// ---------- الأماكن المضافة يدويًا (تُحفظ محليًا في المتصفح) ----------
+const CUSTOM_PLACES_KEY = 'customPlaces_v1';
+
+function loadCustomPlaces(){
+    try{
+        const raw = localStorage.getItem(CUSTOM_PLACES_KEY);
+        return raw ? JSON.parse(raw) : {};
+    }catch(e){
+        return {};
+    }
+}
+
+function saveCustomPlaces(obj){
+    try{
+        localStorage.setItem(CUSTOM_PLACES_KEY, JSON.stringify(obj));
+        return true;
+    }catch(e){
+        return false;
+    }
+}
+
+let customPlaces = loadCustomPlaces();
+// دمج الأماكن المضافة يدويًا فوق القائمة الأصلية (لها الأولوية)
+Object.keys(customPlaces).forEach(function(code){
+    codeNames[code] = customPlaces[code];
 });
 
 const distanceMap = {};
@@ -321,14 +452,16 @@ function renderList(){
     const pageItems = filteredPlaces.slice(startIdx, startIdx + PAGE_SIZE);
 
     if(pageItems.length === 0){
-        listBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
+        listBody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
     } else {
         let rowsHtml = '';
         pageItems.forEach(function(p){
             const code = p[0], name = p[1];
+            const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
             rowsHtml += "<tr>" +
                 "<td>" + escapeHtml(code) + "</td>" +
                 "<td>" + escapeHtml(name || '') + "</td>" +
+                "<td><button type='button' class='btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>تعديل</button></td>" +
                 "</tr>";
         });
         listBody.innerHTML = rowsHtml;
@@ -365,6 +498,118 @@ listSearch.addEventListener('input', function(){
 btnClearSearch.addEventListener('click', function(){
     listSearch.value = '';
     applyFilter('');
+});
+
+// ---------- إضافة / تعديل مكان ----------
+const addPlaceForm = document.getElementById('addPlaceForm');
+const addPlaceStatus = document.getElementById('addPlaceStatus');
+const addPlaceTitle = document.getElementById('addPlaceTitle');
+const newCodeInput = document.getElementById('newCode');
+const newNameInput = document.getElementById('newName');
+const btnSubmitPlace = document.getElementById('btnSubmitPlace');
+const btnCancelEdit = document.getElementById('btnCancelEdit');
+
+let editingCode = null; // null = وضع إضافة، غير ذلك = وضع تعديل لهذا الكود
+
+function setAddPlaceStatus(type, msg){
+    if(!type){ addPlaceStatus.style.display = 'none'; return; }
+    addPlaceStatus.className = 'status ' + type;
+    addPlaceStatus.textContent = msg;
+}
+
+function enterEditMode(code){
+    editingCode = code;
+    newCodeInput.value = code;
+    newCodeInput.disabled = true;
+    newNameInput.value = codeNames[code] || '';
+    addPlaceTitle.textContent = 'تعديل المكان: ' + code;
+    btnSubmitPlace.textContent = 'حفظ التعديل';
+    btnCancelEdit.style.display = '';
+    setAddPlaceStatus(null);
+    switchTab('tab-add');
+    newNameInput.focus();
+}
+
+function exitEditMode(){
+    editingCode = null;
+    newCodeInput.disabled = false;
+    addPlaceTitle.textContent = 'إضافة مكان جديد';
+    btnSubmitPlace.textContent = 'إضافة المكان';
+    btnCancelEdit.style.display = 'none';
+    addPlaceForm.reset();
+    switchTab('tab-list');
+}
+
+// تُستدعى من زر "تعديل" في جدول الأماكن (انظر renderList)
+function startEditPlace(code){
+    if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return;
+    enterEditMode(code);
+}
+
+btnCancelEdit.addEventListener('click', function(){
+    exitEditMode();
+    setAddPlaceStatus(null);
+});
+
+addPlaceForm.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const code = editingCode ? editingCode : newCodeInput.value.trim();
+    const name = newNameInput.value.trim();
+
+    if(!code || !name){
+        setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.');
+        return;
+    }
+
+    const isUpdate = editingCode !== null || Object.prototype.hasOwnProperty.call(codeNames, code);
+
+    // تحديث القاموس والتخزين المحلي
+    codeNames[code] = name;
+    customPlaces[code] = name;
+    const saved = saveCustomPlaces(customPlaces);
+
+    // تحديث القائمة المنسدلة (datalist) الخاصة بحساب المسافة
+    const escapedCode = code.replace(/'/g, "\\'");
+    let existingOpt = datalist.querySelector("option[value='" + escapedCode + "']");
+    if(!existingOpt){
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code + ' - ' + name;
+        datalist.appendChild(opt);
+    } else {
+        existingOpt.textContent = code + ' - ' + name;
+    }
+
+    // تحديث/إضافة السطر في مصفوفة الأماكن ثم إعادة الترتيب والعرض
+    const idx = places.findIndex(function(p){ return p[0] === code; });
+    if(idx >= 0){
+        places[idx][1] = name;
+    } else {
+        places.push([code, name]);
+    }
+    places.sort(function(x, y){ return x[0].localeCompare(y[0]); });
+
+    document.getElementById('statsLine').textContent =
+        'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
+
+    applyFilter(listSearch.value);
+
+    const wasEditing = editingCode !== null;
+
+    if(!saved){
+        setAddPlaceStatus('warn', 'تم الحفظ لهذه الجلسة فقط، لكن تعذّر حفظه بشكل دائم في هذا المتصفح.');
+    } else if(wasEditing || isUpdate){
+        setAddPlaceStatus('ok', 'تم تحديث اسم المكان بالكود ' + code + ' بنجاح.');
+    } else {
+        setAddPlaceStatus('ok', 'تمت إضافة المكان "' + name + '" بالكود ' + code + ' بنجاح، وسيبقى محفوظًا في هذا المتصفح.');
+    }
+
+    if(wasEditing){
+        exitEditMode();
+    } else {
+        addPlaceForm.reset();
+    }
 });
 
 renderList();
