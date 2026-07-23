@@ -203,6 +203,73 @@
         font-size: 11px;
         color: #555;
     }
+
+    /* ==== نظام دخول المسؤول ==== */
+    .admin-bar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+    }
+    .admin-bar button {
+        background: none;
+        border: 1px solid #444;
+        color: #999;
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: 14px;
+        cursor: pointer;
+    }
+    .admin-bar button:hover { background: #1a1a1a; color: #ccc; }
+    .admin-bar .admin-status {
+        font-size: 12px;
+        color: #8fe3a2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+        background: #141414;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 24px;
+        width: 90%;
+        max-width: 340px;
+        text-align: center;
+    }
+    .modal-box h3 { margin-top: 0; font-size: 15px; margin-bottom: 14px; }
+    .modal-box input[type="password"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #555;
+        background: #222;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    .modal-box .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 6px;
+    }
+    .modal-box .modal-error {
+        color: #ff9a9a;
+        font-size: 12px;
+        min-height: 16px;
+        margin-bottom: 6px;
+    }
 </style>
 
 </head>
@@ -211,9 +278,13 @@
     <h1>حساب المسافة</h1>
     <div class="subtitle">بحث فوري وعرض كامل لبيانات المسافات (بدون اتصال بالسيرفر)</div>
 
+    <div class="admin-bar" id="adminBar">
+        <button type="button" id="btnAdminLogin">دخول كمسؤول</button>
+    </div>
+
     <div class="tab-nav">
         <button type="button" class="tab-btn active" data-tab="tab-distance">حساب المسافة</button>
-        <button type="button" class="tab-btn" data-tab="tab-add">إضافة مكان جديد</button>
+        <button type="button" class="tab-btn" data-tab="tab-add" id="tabAddBtn" style="display:none;">إضافة مكان جديد</button>
         <button type="button" class="tab-btn" data-tab="tab-list">عرض الأماكن والتعديل</button>
     </div>
 
@@ -306,7 +377,7 @@
     </div>
 
     <footer class="site-footer">
-        <div class="footer-dev">المطور: <b>ركاب عبدالقادر</b></div>
+        <div class="footer-dev">المطوير: <b>ركاب عبدالقادر</b></div>
         <a class="footer-whatsapp" href="https://wa.me/213552656078" target="_blank" rel="noopener">
             <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16.001 3C9.11 3 3.5 8.611 3.5 15.502c0 2.372.657 4.59 1.797 6.487L3 29l7.201-2.246a12.44 12.44 0 0 0 5.8 1.45h.003c6.891 0 12.5-5.612 12.5-12.503C28.504 8.611 22.893 3 16.001 3zm0 22.7h-.002a10.36 10.36 0 0 1-5.286-1.448l-.379-.225-4.276 1.334 1.36-4.167-.247-.428a10.34 10.34 0 0 1-1.573-5.264c0-5.716 4.653-10.368 10.406-10.368 2.78 0 5.393 1.083 7.36 3.05a10.33 10.33 0 0 1 3.045 7.355c0 5.716-4.653 10.161-10.408 10.161zm5.706-7.626c-.312-.156-1.847-.911-2.133-1.015-.286-.104-.494-.156-.702.156-.208.312-.807 1.015-.99 1.223-.182.208-.364.234-.676.078-.312-.156-1.316-.485-2.507-1.546-.927-.827-1.553-1.848-1.735-2.16-.182-.312-.02-.481.137-.636.14-.14.312-.364.468-.546.156-.182.208-.312.312-.52.104-.208.052-.39-.026-.546-.078-.156-.702-1.69-.962-2.314-.253-.608-.51-.526-.702-.536-.182-.008-.39-.01-.598-.01-.208 0-.546.078-.832.39-.286.312-1.09 1.066-1.09 2.6 0 1.534 1.116 3.016 1.272 3.224.156.208 2.196 3.354 5.32 4.702.744.321 1.324.513 1.777.657.746.238 1.425.204 1.962.124.599-.089 1.847-.755 2.107-1.484.26-.729.26-1.354.182-1.484-.078-.13-.286-.208-.598-.364z"/></svg>
             <span>واتساب: 0552656078</span>
@@ -315,15 +386,121 @@
     </footer>
 </div>
 
+<div class="modal-overlay" id="loginModal">
+    <div class="modal-box">
+        <h3>دخول المسؤول</h3>
+        <div class="modal-error" id="loginError"></div>
+        <input type="password" id="adminPasswordInput" placeholder="كلمة السر" autocomplete="off">
+        <div class="modal-actions">
+            <button type="button" class="btn" id="btnCancelLogin">إلغاء</button>
+            <button type="button" class="btn" id="btnConfirmLogin">دخول</button>
+        </div>
+    </div>
+</div>
+
 <!-- ملف البيانات منفصل: يحتوي على codeNamesArr و records -->
 <script src="data.js"></script>
 <script>
+
+// ==================== نظام دخول المسؤول ====================
+(function(){
+    // كلمة السر مخزّنة بترميز Base64 (تصعيب بسيط، وليست حماية حقيقية من جهة الخادم)
+    const ADMIN_PASS_ENC = "cmVrYWJhYmRlbGthZGVyMTk4MUA=";
+    const ADMIN_KEY = "isAdminRekab";
+
+    const adminBar = document.getElementById('adminBar');
+    const btnAdminLogin = document.getElementById('btnAdminLogin');
+    const tabAddBtn = document.getElementById('tabAddBtn');
+    const loginModal = document.getElementById('loginModal');
+    const loginError = document.getElementById('loginError');
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const btnCancelLogin = document.getElementById('btnCancelLogin');
+    const btnConfirmLogin = document.getElementById('btnConfirmLogin');
+
+    function isAdmin(){
+        return localStorage.getItem(ADMIN_KEY) === 'true';
+    }
+
+    function openLoginModal(){
+        loginError.textContent = '';
+        adminPasswordInput.value = '';
+        loginModal.classList.add('show');
+        setTimeout(function(){ adminPasswordInput.focus(); }, 50);
+    }
+    function closeLoginModal(){
+        loginModal.classList.remove('show');
+    }
+
+    function renderAdminBar(){
+        if(isAdmin()){
+            adminBar.innerHTML = '<span class="admin-status">✔ مسجّل كمسؤول</span> <button type="button" id="btnAdminLogout">تسجيل الخروج</button>';
+            document.getElementById('btnAdminLogout').addEventListener('click', function(){
+                localStorage.removeItem(ADMIN_KEY);
+                applyAdminVisibility();
+                renderAdminBar();
+                if(typeof switchTab === 'function') switchTab('tab-distance');
+            });
+        } else {
+            adminBar.innerHTML = '<button type="button" id="btnAdminLogin">دخول كمسؤول</button>';
+            document.getElementById('btnAdminLogin').addEventListener('click', openLoginModal);
+        }
+    }
+
+    function applyAdminVisibility(){
+        tabAddBtn.style.display = isAdmin() ? '' : 'none';
+        // إعادة رسم قائمة الأماكن لإظهار/إخفاء أزرار التعديل حسب صلاحية المستخدم
+        if(typeof renderList === 'function') renderList();
+    }
+
+    btnAdminLogin.addEventListener('click', openLoginModal);
+    btnCancelLogin.addEventListener('click', closeLoginModal);
+    loginModal.addEventListener('click', function(e){
+        if(e.target === loginModal) closeLoginModal();
+    });
+
+    function attemptLogin(){
+        const entered = adminPasswordInput.value;
+        if(entered === atob(ADMIN_PASS_ENC)){
+            localStorage.setItem(ADMIN_KEY, 'true');
+            closeLoginModal();
+            applyAdminVisibility();
+            renderAdminBar();
+        } else {
+            loginError.textContent = 'كلمة السر غير صحيحة.';
+        }
+    }
+
+    btnConfirmLogin.addEventListener('click', attemptLogin);
+    adminPasswordInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter') attemptLogin();
+    });
+
+    // إتاحة دوال الإدارة للاستخدام من بقية السكربت (renderList)
+    window.__isAdmin = isAdmin;
+    window.__applyAdminVisibility = applyAdminVisibility;
+
+    renderAdminBar();
+    // تطبيق الإخفاء الأولي فور تحميل الصفحة (سيُعاد تطبيقه لاحقًا بعد renderList الأول)
+    tabAddBtn.style.display = isAdmin() ? '' : 'none';
+})();
 
 // ---------- التبديل بين التبويبات (الأقسام الثلاثة) ----------
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabPanels = document.querySelectorAll('.tab-panel');
 
 function switchTab(tabId){
+    // حماية إضافية: منع فتح تبويب "إضافة مكان جديد" لغير المسؤول حتى لو تم استدعاؤه برمجيًا
+    if(tabId === 'tab-add' && !(window.__isAdmin && window.__isAdmin())){
+        if(typeof document !== 'undefined'){
+            const modal = document.getElementById('loginModal');
+            if(modal){
+                document.getElementById('loginError').textContent = '';
+                document.getElementById('adminPasswordInput').value = '';
+                modal.classList.add('show');
+            }
+        }
+        return;
+    }
     tabPanels.forEach(function(panel){
         panel.classList.toggle('active', panel.id === tabId);
     });
@@ -497,6 +674,7 @@ function renderList(){
 
     const startIdx = (currentPage - 1) * PAGE_SIZE;
     const pageItems = filteredPlaces.slice(startIdx, startIdx + PAGE_SIZE);
+    const userIsAdmin = !!(window.__isAdmin && window.__isAdmin());
 
     if(pageItems.length === 0){
         listBody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
@@ -505,10 +683,13 @@ function renderList(){
         pageItems.forEach(function(p){
             const code = p[0], name = p[1];
             const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
+            const actionCell = userIsAdmin
+                ? "<button type='button' class='btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>تعديل</button>"
+                : "<span style='color:#555; font-size:12px;'>—</span>";
             rowsHtml += "<tr>" +
                 "<td>" + escapeHtml(code) + "</td>" +
                 "<td>" + escapeHtml(name || '') + "</td>" +
-                "<td><button type='button' class='btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>تعديل</button></td>" +
+                "<td>" + actionCell + "</td>" +
                 "</tr>";
         });
         listBody.innerHTML = rowsHtml;
@@ -589,6 +770,7 @@ function exitEditMode(){
 
 // تُستدعى من زر "تعديل" في جدول الأماكن (انظر renderList)
 function startEditPlace(code){
+    if(!(window.__isAdmin && window.__isAdmin())) return;
     if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return;
     enterEditMode(code);
 }
@@ -600,6 +782,11 @@ btnCancelEdit.addEventListener('click', function(){
 
 addPlaceForm.addEventListener('submit', function(e){
     e.preventDefault();
+
+    if(!(window.__isAdmin && window.__isAdmin())){
+        setAddPlaceStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.');
+        return;
+    }
 
     const code = editingCode ? editingCode : newCodeInput.value.trim();
     const name = newNameInput.value.trim();
