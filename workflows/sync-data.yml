@@ -1,1 +1,34 @@
+name: Sync ERP Data
 
+on:
+  schedule:
+    # كل ساعة — عدّل الرقم حسب الحاجة (مثال: */30 لكل 30 دقيقة، 0 */6 لكل 6 ساعات)
+    - cron: "0 * * * *"
+  workflow_dispatch: {}   # يتيح تشغيل المزامنة يدويًا بضغطة زر من تبويب Actions
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run sync script
+        run: python sync_data.py
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.js
+          if git diff --cached --quiet; then
+            echo "لا يوجد تغيير في البيانات."
+          else
+            git commit -m "تحديث تلقائي لبيانات data.js من مصدر ERP"
+            git push
+          fi
