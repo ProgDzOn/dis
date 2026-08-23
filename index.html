@@ -417,8 +417,16 @@
     const btnCancelLogin = document.getElementById('btnCancelLogin');
     const btnConfirmLogin = document.getElementById('btnConfirmLogin');
 
+    // احتياط في حال تعذّر الوصول لـ localStorage (مثلاً عند فتح الملف مباشرة file://
+    // أو التصفح الخاص): يبقى الدخول فعّالاً لهذه الجلسة فقط دون أن يتعطّل التطبيق.
+    let adminSessionFallback = false;
+
     function isAdmin(){
-        return localStorage.getItem(ADMIN_KEY) === 'true';
+        try{
+            return localStorage.getItem(ADMIN_KEY) === 'true' || adminSessionFallback;
+        }catch(e){
+            return adminSessionFallback;
+        }
     }
 
     function openLoginModal(){
@@ -435,7 +443,8 @@
         if(isAdmin()){
             adminBar.innerHTML = '<span class="admin-status">✔ مسجّل كمسؤول</span> <button type="button" id="btnAdminLogout">تسجيل الخروج</button>';
             document.getElementById('btnAdminLogout').addEventListener('click', function(){
-                localStorage.removeItem(ADMIN_KEY);
+                adminSessionFallback = false;
+                try{ localStorage.removeItem(ADMIN_KEY); }catch(e){}
                 applyAdminVisibility();
                 renderAdminBar();
                 if(typeof switchTab === 'function') switchTab('tab-distance');
@@ -461,7 +470,8 @@
     function attemptLogin(){
         const entered = adminPasswordInput.value;
         if(entered === atob(ADMIN_PASS_ENC)){
-            localStorage.setItem(ADMIN_KEY, 'true');
+            adminSessionFallback = true;
+            try{ localStorage.setItem(ADMIN_KEY, 'true'); }catch(e){}
             closeLoginModal();
             applyAdminVisibility();
             renderAdminBar();
