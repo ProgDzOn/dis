@@ -270,6 +270,90 @@
         min-height: 16px;
         margin-bottom: 6px;
     }
+
+    /* ==== تحديث قاعدة البيانات (رفع ملف) ==== */
+    .upload-box {
+        background: #111;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 18px;
+        margin-top: 10px;
+    }
+    .upload-help {
+        font-size: 12.5px;
+        color: #999;
+        line-height: 1.8;
+        margin: 0 0 14px;
+    }
+    .upload-help code {
+        background: #222;
+        color: #7bd0ff;
+        padding: 1px 6px;
+        border-radius: 3px;
+        direction: ltr;
+        display: inline-block;
+    }
+    .dropzone {
+        border: 2px dashed #444;
+        border-radius: 8px;
+        padding: 34px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+        background: #0b0b0b;
+    }
+    .dropzone:hover { border-color: #2d7dd2; background: #0e1620; }
+    .dropzone.dragover { border-color: #4fc3f7; background: #0e1c26; }
+    .dropzone.has-file { border-color: #245c34; background: #0e1a12; }
+    .dropzone-icon { font-size: 30px; margin-bottom: 8px; opacity: .85; }
+    .dropzone-text { font-size: 13px; color: #ccc; }
+    .dropzone-link { color: #4fc3f7; text-decoration: underline; }
+    .dropzone-filename {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #8fe3a2;
+        direction: ltr;
+        word-break: break-all;
+    }
+    .upload-preview {
+        margin-top: 16px;
+        border-top: 1px solid #2a2a2a;
+        padding-top: 14px;
+    }
+    .upload-preview h3 { font-size: 14px; margin: 0 0 10px; }
+    .upload-preview ul {
+        list-style: none;
+        margin: 0 0 4px;
+        padding: 0;
+        font-size: 13px;
+        color: #ccc;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 6px 14px;
+    }
+    .upload-preview ul li {
+        background: #191919;
+        border: 1px solid #2e2e2e;
+        border-radius: 4px;
+        padding: 8px 10px;
+    }
+    .upload-preview ul li b { color: #4fc3f7; }
+    .upload-download-row {
+        margin-top: 18px;
+        border-top: 1px solid #2a2a2a;
+        padding-top: 14px;
+    }
+    .spinner-inline {
+        display: inline-block;
+        width: 12px; height: 12px;
+        border: 2px solid #555;
+        border-top-color: #4fc3f7;
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        margin-inline-end: 6px;
+        vertical-align: -1px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 </head>
@@ -286,6 +370,7 @@
         <button type="button" class="tab-btn active" data-tab="tab-distance">حساب المسافة</button>
         <button type="button" class="tab-btn" data-tab="tab-add" id="tabAddBtn" style="display:none;">إضافة مكان جديد</button>
         <button type="button" class="tab-btn" data-tab="tab-list">عرض الأماكن والتعديل</button>
+        <button type="button" class="tab-btn" data-tab="tab-upload" id="tabUploadBtn" style="display:none;">تحديث قاعدة البيانات</button>
     </div>
 
     <datalist id="codesList"></datalist>
@@ -376,6 +461,44 @@
         </div>
     </div>
 
+    <!-- ============ القسم 4: تحديث قاعدة البيانات (رفع ملف) ============ -->
+    <div class="tab-panel" id="tab-upload">
+        <h2>تحديث قاعدة البيانات</h2>
+        <div class="upload-box">
+            <p class="upload-help">
+                ارفع ملف <code>data.js</code> جديدًا (بنفس صيغة الملف الحالي، أو الصيغة الخام القادمة من نظام ERP) لتحديث
+                جميع الأكواد والأسماء ومسافات المسارات دفعة واحدة، بدل إضافتها واحدة تلو الأخرى.
+                سيتم التحقق من الملف قبل أي تحديث، ولن يُطبَّق شيء إلا بعد تأكيدك.
+            </p>
+
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="رفع ملف data.js">
+                <input type="file" id="dataFileInput" accept=".js,text/javascript,application/javascript" hidden>
+                <div class="dropzone-icon">⬆️</div>
+                <div class="dropzone-text">اسحب ملف <b>data.js</b> هنا، أو <span class="dropzone-link" id="dropzoneLink">اختر ملفًا من جهازك</span></div>
+                <div class="dropzone-filename" id="dropzoneFilename"></div>
+            </div>
+
+            <div id="uploadStatus" class="status"></div>
+
+            <div id="uploadPreview" class="upload-preview" style="display:none;">
+                <h3>معاينة قبل التأكيد</h3>
+                <ul id="uploadPreviewList"></ul>
+                <div class="add-place-actions">
+                    <button type="button" class="btn" id="btnCancelUpload">إلغاء</button>
+                    <button type="button" class="btn" id="btnConfirmUpload">تأكيد واستبدال البيانات</button>
+                </div>
+            </div>
+
+            <div class="upload-download-row" id="uploadDownloadRow" style="display:none;">
+                <p class="upload-help">
+                    التحديث أعلاه ينطبق على هذا المتصفح فقط. لتحديث الموقع بشكل دائم لجميع المستخدمين،
+                    نزّل الملف الناتج وارفعه ليحل محل <code>data.js</code> في مستودع المشروع على GitHub.
+                </p>
+                <button type="button" class="btn" id="btnDownloadData">⬇ تنزيل data.js المحدَّث</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="site-footer">
         <div class="footer-dev">المطوير: <b>ركاب عبدالقادر</b></div>
         <a class="footer-whatsapp" href="https://wa.me/213552656078" target="_blank" rel="noopener">
@@ -411,6 +534,7 @@
     const adminBar = document.getElementById('adminBar');
     const btnAdminLogin = document.getElementById('btnAdminLogin');
     const tabAddBtn = document.getElementById('tabAddBtn');
+    const tabUploadBtn = document.getElementById('tabUploadBtn');
     const loginModal = document.getElementById('loginModal');
     const loginError = document.getElementById('loginError');
     const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -457,6 +581,7 @@
 
     function applyAdminVisibility(){
         tabAddBtn.style.display = isAdmin() ? '' : 'none';
+        if(tabUploadBtn) tabUploadBtn.style.display = isAdmin() ? '' : 'none';
         // إعادة رسم قائمة الأماكن لإظهار/إخفاء أزرار التعديل حسب صلاحية المستخدم
         if(typeof renderList === 'function') renderList();
     }
@@ -492,6 +617,7 @@
     renderAdminBar();
     // تطبيق الإخفاء الأولي فور تحميل الصفحة (سيُعاد تطبيقه لاحقًا بعد renderList الأول)
     tabAddBtn.style.display = isAdmin() ? '' : 'none';
+    if(tabUploadBtn) tabUploadBtn.style.display = isAdmin() ? '' : 'none';
 })();
 
 // ---------- التبديل بين التبويبات (الأقسام الثلاثة) ----------
@@ -499,8 +625,8 @@ const tabButtons = document.querySelectorAll('.tab-btn');
 const tabPanels = document.querySelectorAll('.tab-panel');
 
 function switchTab(tabId){
-    // حماية إضافية: منع فتح تبويب "إضافة مكان جديد" لغير المسؤول حتى لو تم استدعاؤه برمجيًا
-    if(tabId === 'tab-add' && !(window.__isAdmin && window.__isAdmin())){
+    // حماية إضافية: منع فتح تبويب "إضافة مكان جديد" أو "تحديث قاعدة البيانات" لغير المسؤول حتى لو تم استدعاؤه برمجيًا
+    if((tabId === 'tab-add' || tabId === 'tab-upload') && !(window.__isAdmin && window.__isAdmin())){
         if(typeof document !== 'undefined'){
             const modal = document.getElementById('loginModal');
             if(modal){
@@ -857,6 +983,267 @@ addPlaceForm.addEventListener('submit', function(e){
 });
 
 renderList();
+
+// ---------- تبويب تحديث قاعدة البيانات (رفع ملف data.js) ----------
+(function(){
+    const dropzone = document.getElementById('dropzone');
+    const dropzoneLink = document.getElementById('dropzoneLink');
+    const dropzoneFilename = document.getElementById('dropzoneFilename');
+    const dataFileInput = document.getElementById('dataFileInput');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const uploadPreviewList = document.getElementById('uploadPreviewList');
+    const btnCancelUpload = document.getElementById('btnCancelUpload');
+    const btnConfirmUpload = document.getElementById('btnConfirmUpload');
+    const uploadDownloadRow = document.getElementById('uploadDownloadRow');
+    const btnDownloadData = document.getElementById('btnDownloadData');
+
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB كحد أقصى معقول لملف بيانات نصي
+    let pendingUpload = null; // { data:{...}, raw:string, fileName:string }
+
+    function setUploadStatus(type, msg){
+        if(!type){ uploadStatus.style.display = 'none'; return; }
+        uploadStatus.className = 'status ' + type;
+        uploadStatus.innerHTML = msg;
+    }
+
+    function resetDropzoneVisual(){
+        dropzone.classList.remove('has-file');
+        dropzoneFilename.textContent = '';
+    }
+
+    function resetUploadFlow(keepStatus){
+        pendingUpload = null;
+        uploadPreview.style.display = 'none';
+        uploadPreviewList.innerHTML = '';
+        uploadDownloadRow.style.display = 'none';
+        dataFileInput.value = '';
+        resetDropzoneVisual();
+        if(!keepStatus) setUploadStatus(null);
+    }
+
+    // يحوّل صيغة "unite" الخام (كما تصل من ERP عبر sync_data.py) لنفس تسمية الموقع المستخدمة في data.js.
+    function renameUniteVariable(content){
+        if(/\bvar\s+unite\s*=/.test(content) && !/\bvar\s+codeNamesArr\s*=|\bconst\s+codeNamesArr\s*=/.test(content)){
+            return content.replace(/var\s+unite\s*=/, 'var codeNamesArr =');
+        }
+        return content;
+    }
+
+    function parseDataFile(content){
+        const src = renameUniteVariable(content);
+
+        // التحقق يتم قبل أي إضافة تلقائية لسطر "records"، حتى لا يظهر اسم متغيّر مفقود
+        // بالخطأ داخل نص مُضاف لاحقًا (مثال: "var records = distance;" حين تكون distance
+        // نفسها غير معرَّفة أصلاً في الملف).
+        ['codeNamesArr', 'lieu', 'distance'].forEach(function(name){
+            const declared = new RegExp('\\b(var|let|const)\\s+' + name + '\\s*=');
+            if(!declared.test(src)){
+                throw new Error('الملف لا يحتوي على المتغيّر المطلوب «' + name + '». تأكّد أنه بنفس صيغة data.js الأصلي.');
+            }
+        });
+
+        // إضافة سطر ربط records بـ distance إن كان ناقصًا — بنفس منطق سكربت المزامنة sync_data.py
+        const finalSrc = /\bvar\s+records\s*=/.test(src) ? src : src.replace(/\s*$/, '') + '\n\nvar records = distance;\n';
+
+        const wrapped = finalSrc + '\n;return { codeNamesArr: (typeof codeNamesArr!=="undefined")?codeNamesArr:undefined, ' +
+            'lieu: (typeof lieu!=="undefined")?lieu:undefined, ' +
+            'distance: (typeof distance!=="undefined")?distance:undefined, ' +
+            'produit: (typeof produit!=="undefined")?produit:undefined, ' +
+            'operation: (typeof operation!=="undefined")?operation:undefined };';
+
+        let result;
+        try{
+            // الملف يُشغَّل داخل دالة منعزلة (Function) وليس eval المباشر، ودون وصول لأي شيء
+            // خارج نطاقه سوى القيم التي يعيدها صراحةً.
+            const runner = new Function(wrapped);
+            result = runner();
+        }catch(e){
+            throw new Error('تعذّر قراءة محتوى الملف: يبدو أنه لا يحتوي على كود JavaScript صحيح (' + e.message + ').');
+        }
+
+        if(!Array.isArray(result.codeNamesArr) || result.codeNamesArr.length === 0){
+            throw new Error('قائمة المناطق العامة (codeNamesArr) فارغة أو غير صحيحة داخل الملف.');
+        }
+        if(!Array.isArray(result.lieu) || result.lieu.length === 0){
+            throw new Error('قائمة الأماكن التفصيلية (lieu) فارغة أو غير صحيحة داخل الملف.');
+        }
+        if(!Array.isArray(result.distance) || result.distance.length === 0){
+            throw new Error('قائمة مسافات المسارات (distance) فارغة أو غير صحيحة داخل الملف.');
+        }
+
+        return { data: result, raw: finalSrc };
+    }
+
+    function renderPreview(fileName, sizeKb, parsed){
+        const d = parsed.data;
+        const rows = [
+            ['اسم الملف', fileName],
+            ['حجم الملف', sizeKb + ' KB'],
+            ['المناطق العامة', d.codeNamesArr.length.toLocaleString('en-US')],
+            ['الأماكن التفصيلية', d.lieu.length.toLocaleString('en-US')],
+            ['مسارات المسافة', d.distance.length.toLocaleString('en-US')],
+        ];
+        if(Array.isArray(d.produit)) rows.push(['المنتجات', d.produit.length.toLocaleString('en-US')]);
+        if(Array.isArray(d.operation)) rows.push(['أنواع العمليات', d.operation.length.toLocaleString('en-US')]);
+
+        uploadPreviewList.innerHTML = rows.map(function(r){
+            return '<li>' + r[0] + ': <b>' + r[1] + '</b></li>';
+        }).join('');
+        uploadPreview.style.display = 'block';
+    }
+
+    function handleFile(file){
+        if(!(window.__isAdmin && window.__isAdmin())){
+            setUploadStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.');
+            return;
+        }
+        resetUploadFlow(false);
+
+        if(!/\.(js|txt)$/i.test(file.name)){
+            setUploadStatus('error', 'صيغة الملف غير مدعومة. الرجاء رفع ملف بامتداد .js (نفس صيغة data.js).');
+            return;
+        }
+        if(file.size > MAX_FILE_SIZE){
+            setUploadStatus('error', 'حجم الملف كبير جدًا (الحد الأقصى 15 MB).');
+            return;
+        }
+
+        dropzone.classList.add('has-file');
+        dropzoneFilename.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        setUploadStatus('warn', '<span class="spinner-inline"></span> جارٍ التحقق من الملف...');
+
+        const reader = new FileReader();
+        reader.onerror = function(){
+            setUploadStatus('error', 'تعذّرت قراءة الملف من الجهاز. حاول مرة أخرى.');
+        };
+        reader.onload = function(){
+            try{
+                const parsed = parseDataFile(String(reader.result));
+                pendingUpload = { data: parsed.data, raw: parsed.raw, fileName: file.name };
+                setUploadStatus('ok', 'الملف صالح. راجع الملخّص أدناه ثم اضغط "تأكيد واستبدال البيانات".');
+                renderPreview(file.name, (file.size / 1024).toFixed(1), parsed);
+            }catch(err){
+                pendingUpload = null;
+                setUploadStatus('error', err.message);
+            }
+        };
+        reader.readAsText(file, 'utf-8');
+    }
+
+    dropzoneLink.addEventListener('click', function(e){
+        e.stopPropagation();
+        dataFileInput.click();
+    });
+    dropzone.addEventListener('click', function(){ dataFileInput.click(); });
+    dropzone.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); dataFileInput.click(); }
+    });
+    dataFileInput.addEventListener('change', function(){
+        if(dataFileInput.files && dataFileInput.files[0]) handleFile(dataFileInput.files[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach(function(evt){
+        dropzone.addEventListener(evt, function(e){
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+    });
+    ['dragleave', 'dragend'].forEach(function(evt){
+        dropzone.addEventListener(evt, function(e){
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.remove('dragover');
+        });
+    });
+    dropzone.addEventListener('drop', function(e){
+        e.preventDefault(); e.stopPropagation();
+        dropzone.classList.remove('dragover');
+        if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+
+    btnCancelUpload.addEventListener('click', function(){
+        resetUploadFlow(false);
+    });
+
+    btnConfirmUpload.addEventListener('click', function(){
+        if(!pendingUpload){ return; }
+        const confirmed = window.confirm(
+            'سيتم استبدال بيانات المسافات والأماكن الحالية بالكامل بمحتوى الملف المرفوع "' +
+            pendingUpload.fileName + '". هذا الإجراء لا يمكن التراجع عنه في هذه الجلسة. هل تريد المتابعة؟'
+        );
+        if(!confirmed) return;
+
+        try{
+            applyUploadedData(pendingUpload.data);
+            setUploadStatus('ok', 'تم تحديث البيانات في هذه الصفحة بنجاح (' + records.length + ' مسار، ' +
+                Object.keys(codeNames).length + ' موقع). لتحديث الموقع بشكل دائم للجميع نزّل الملف أدناه وارفعه على GitHub.');
+            uploadPreview.style.display = 'none';
+            uploadDownloadRow.style.display = 'block';
+        }catch(err){
+            setUploadStatus('error', 'حدث خطأ أثناء تطبيق البيانات: ' + err.message);
+        }
+    });
+
+    btnDownloadData.addEventListener('click', function(){
+        if(!pendingUpload) return;
+        const blob = new Blob([pendingUpload.raw], { type: 'text/javascript;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'data.js';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    });
+
+    // يستبدل محتوى المصفوفات الحيّة في الصفحة (مع الحفاظ على نفس المراجع، بما أن records === distance)
+    function applyUploadedData(newData){
+        codeNamesArr.length = 0;
+        Array.prototype.push.apply(codeNamesArr, newData.codeNamesArr);
+
+        lieu.length = 0;
+        Array.prototype.push.apply(lieu, newData.lieu);
+
+        distance.length = 0;
+        Array.prototype.push.apply(distance, newData.distance);
+        // records يشير لنفس مصفوفة distance، فيُحدَّث تلقائيًا معها
+
+        if(Array.isArray(newData.produit) && typeof produit !== 'undefined'){
+            produit.length = 0;
+            Array.prototype.push.apply(produit, newData.produit);
+        }
+        if(Array.isArray(newData.operation) && typeof operation !== 'undefined'){
+            operation.length = 0;
+            Array.prototype.push.apply(operation, newData.operation);
+        }
+
+        // إعادة بناء الحالة المشتقة: قاموس الأسماء، القائمة المنسدلة، خريطة المسافات، وقائمة الأماكن
+        Object.keys(codeNames).forEach(function(k){ delete codeNames[k]; });
+        lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; });
+        codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
+        Object.keys(customPlaces).forEach(function(code){ codeNames[code] = customPlaces[code]; });
+
+        Object.keys(distanceMap).forEach(function(k){ delete distanceMap[k]; });
+        records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
+
+        let dlHtml = '';
+        Object.keys(codeNames).forEach(function(code){
+            dlHtml += "<option value='" + code + "'>" + code + " - " + codeNames[code] + "</option>";
+        });
+        datalist.innerHTML = dlHtml;
+
+        places.length = 0;
+        Array.prototype.push.apply(places, Object.keys(codeNames)
+            .map(function(code){ return [code, codeNames[code]]; })
+            .sort(function(x, y){ return x[0].localeCompare(y[0]); }));
+
+        document.getElementById('statsLine').textContent =
+            'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
+
+        applyFilter(listSearch.value);
+    }
+})();
 </script>
    <script>
     // تعطيل النقر بزر الماوس الأيمن
