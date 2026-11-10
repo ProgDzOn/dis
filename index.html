@@ -1,429 +1,415 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
+<meta name="color-scheme" content="dark">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2a1b6b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <title>حساب المسافة - عرض جميع المسافات</title>
 <style>
-    * { box-sizing: border-box; }
-    body {
-        color: #fff;
-        background: #000;
-        font-family: "Lucida Grande", Tahoma, Verdana, Arial, sans-serif;
-        font-size: 14px;
-        padding: 20px;
-    }
-    .wrap { max-width: 900px; margin: auto; }
-    h1 { text-align: center; margin-bottom: 6px; }
-    .subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 20px; }
-    h2 { font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 34px; }
+:root{
+    --bg-1:#0f0a2e;--bg-2:#2a1b6b;--bg-3:#0b3a6e;
+    --card:rgba(255,255,255,.07);--card-border:rgba(255,255,255,.16);
+    --text:#f4f6ff;--muted:#a9b0d8;
+    --cyan:#00e5ff;--pink:#ff3d9a;--amber:#ffb300;--violet:#8b5cf6;
+    --green:#22e58b;--red:#ff5d73;
+    --grad-main:linear-gradient(135deg,#7c4dff 0%,#00b0ff 55%,#00e5ff 100%);
+    --grad-warm:linear-gradient(135deg,#ff3d9a 0%,#ff8a00 100%);
+    --grad-cool:linear-gradient(135deg,#00e5ff 0%,#22e58b 100%);
+    --radius:18px;--shadow:0 10px 40px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{
+    margin:0;min-height:100vh;color:var(--text);
+    font-family:"Cairo","Segoe UI",Tahoma,Verdana,Arial,sans-serif;
+    font-size:15px;line-height:1.6;
+    background:
+        radial-gradient(circle at 12% 8%,rgba(255,61,154,.35),transparent 38%),
+        radial-gradient(circle at 90% 15%,rgba(0,229,255,.30),transparent 40%),
+        radial-gradient(circle at 70% 95%,rgba(139,92,246,.35),transparent 45%),
+        linear-gradient(160deg,var(--bg-1),var(--bg-2) 55%,var(--bg-3));
+    background-attachment:fixed;
+}
+.app-shell{display:flex;min-height:100vh;}
+.main{flex:1;min-width:0;padding:clamp(14px,3vw,34px);}
+.wrap{max-width:1100px;margin:0 auto;}
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-    th, td {
-        padding: 10px;
-        border: 1px solid #fff;
-        text-align: center;
-    }
-    th { background-color: #444; }
-    form { margin-top: 20px; }
-    input[type="text"], input[type="search"] {
-        width: 100%;
-        padding: 6px;
-        border: 1px solid #fff;
-        background: #222;
-        color: #fff;
-        text-align: center;
-    }
-    .code-name {
-        font-size: 11px;
-        color: #7bd0ff;
-        min-height: 14px;
-        margin-top: 4px;
-    }
-    input[type="submit"], .btn {
-        padding: 7px 24px;
-        background: #444;
-        color: #fff;
-        border: 1px solid #666;
-        cursor: pointer;
-        border-radius: 3px;
-        font-size: 14px;
-    }
-    input[type="submit"]:hover, .btn:hover { background: #555; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* ===== الترويسة ===== */
+h1{margin:0;font-size:clamp(22px,5vw,34px);font-weight:900;
+    background:linear-gradient(90deg,#fff,#7df3ff 50%,#ff9ad0);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+h2{font-size:clamp(18px,3.4vw,22px);margin:0 0 16px;padding-inline-start:14px;
+    border-inline-start:5px solid var(--cyan);font-weight:800;}
 
-    .status {
-        margin: 16px 0;
-        font-size: 13px;
-        padding: 10px 12px;
-        border-radius: 4px;
-        display: none;
-    }
-    .status.error { background: #3a1515; color: #ff9a9a; display: block; border: 1px solid #6a2a2a; }
-    .status.ok { background: #12301c; color: #8fe3a2; display: block; border: 1px solid #245c34; }
-    .status.warn { background: #3a2f15; color: #f0cf8a; display: block; border: 1px solid #6a5a2a; }
+/* ===== التبويبات ===== */
+.tab-panel{display:none;animation:fadeUp .35s ease;}
+.tab-panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
-    .result-box {
-        display: none;
-        text-align: center;
-        background: #111;
-        border: 1px solid #444;
-        border-radius: 6px;
-        padding: 20px;
-        margin-top: 10px;
-    }
-    .result-box .big-distance { font-size: 34px; font-weight: bold; color: #4fc3f7; margin: 6px 0; }
-    .result-box .sub { font-size: 13px; color: #aaa; }
+/* ===== البطاقات ===== */
+.card,.add-place-box,.upload-box,.result-box{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.card{padding:clamp(16px,3.5vw,30px);}
 
-    .stats { text-align: center; font-size: 11px; color: #666; margin-top: 8px; }
+/* ===== حقول الإدخال ===== */
+label{display:block;font-weight:700;font-size:14px;margin-bottom:10px;}
+label small{color:var(--muted);font-weight:400;margin-inline-start:6px;}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:8px;}
+.dot-from{background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
+.dot-to{background:var(--pink);box-shadow:0 0 10px var(--pink);}
 
-    .list-toolbar {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-    .list-toolbar input[type=search] { flex: 1; min-width: 200px; }
+input[type="text"],input[type="search"],input[type="password"]{
+    width:100%;padding:14px 14px;
+    font:inherit;font-size:16px;color:#fff;text-align:center;
+    background:rgba(8,6,32,.6);
+    border:2px solid rgba(255,255,255,.18);
+    border-radius:14px;outline:none;transition:.2s;
+}
+input::placeholder{color:rgba(255,255,255,.4);}
+input:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(0,229,255,.22);}
+input:disabled{opacity:.55;}
+.code-name{font-size:13px;color:var(--cyan);min-height:20px;margin-top:8px;text-align:center;font-weight:700;}
 
-    table.list-table { font-size: 13px; }
-    table.list-table th { background: #333; }
-    table.list-table tbody tr:nth-child(odd) { background: #0d0d0d; }
-    table.list-table tbody tr:nth-child(even) { background: #161616; }
-    table.list-table td { border-color: #333; }
+.route-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;}
+.route-arrow{
+    margin-top:36px;width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;background:var(--grad-warm);
+    box-shadow:0 6px 16px rgba(255,61,154,.45);
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
-    .footer-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-top: 10px;
-    }
-    .pagination { display: flex; gap: 4px; flex-wrap: wrap; }
-    .pagination button {
-        background: #222;
-        color: #ccc;
-        border: 1px solid #555;
-        border-radius: 4px;
-        padding: 5px 10px;
-        font-size: 12px;
-        cursor: pointer;
-    }
-    .pagination button.active { background: #2d7dd2; color: #fff; border-color: #2d7dd2; }
-    .pagination button:hover:not(.active):not(:disabled) { background: #333; }
-    .info-text { font-size: 12px; color: #999; }
-    .loading-msg { text-align:center; color:#888; padding: 20px; }
+/* ===== الأزرار ===== */
+.btn,.btn-primary,input[type="submit"]{
+    font:inherit;font-size:15px;font-weight:700;color:#fff;
+    padding:11px 24px;border:none;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.14);
+    border:1px solid var(--card-border);
+    transition:transform .15s,box-shadow .2s,background .2s;
+}
+.btn:hover{background:rgba(255,255,255,.24);transform:translateY(-1px);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.active{background:var(--grad-main);border-color:transparent;box-shadow:0 6px 18px rgba(0,176,255,.4);}
+.btn-primary,#btnSubmitPlace,#btnConfirmUpload,#btnConfirmLogin{
+    background:var(--grad-main);border:none;box-shadow:0 8px 22px rgba(0,176,255,.4);
+}
+.btn-primary:hover,#btnSubmitPlace:hover,#btnConfirmUpload:hover,#btnConfirmLogin:hover{
+    background:var(--grad-main);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,176,255,.55);
+}
+.btn-primary{width:100%;margin-top:22px;padding:16px;font-size:17px;
+    background:var(--grad-warm);box-shadow:0 10px 26px rgba(255,61,154,.45);}
+.btn-primary:hover{background:var(--grad-warm);box-shadow:0 14px 32px rgba(255,61,154,.6);}
+#btnDownloadData{background:var(--grad-cool);color:#04281b;border:none;}
 
-    .add-place-box {
-        background: #111;
-        border: 1px solid #444;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 10px;
-    }
-    .add-place-box table { margin-bottom: 0; }
-    .add-place-box th { background: #333; }
-    .add-place-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-    .badge-custom {
-        display: inline-block;
-        font-size: 10px;
-        color: #4fc3f7;
-        border: 1px solid #245c74;
-        border-radius: 3px;
-        padding: 1px 5px;
-        margin-inline-start: 6px;
-    }
+/* ===== رسائل الحالة ===== */
+.status{margin:16px 0;font-size:14px;padding:12px 16px;border-radius:12px;display:none;border:1px solid transparent;}
+.status.error{display:block;background:rgba(255,93,115,.16);color:#ffb3bd;border-color:rgba(255,93,115,.5);}
+.status.ok{display:block;background:rgba(34,229,139,.15);color:#8ff5c3;border-color:rgba(34,229,139,.5);}
+.status.warn{display:block;background:rgba(255,179,0,.15);color:#ffd77a;border-color:rgba(255,179,0,.5);}
 
-    .tab-nav {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-bottom: 24px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 12px;
-    }
-    .tab-nav button {
-        background: #161616;
-        color: #ccc;
-        border: 1px solid #444;
-        border-radius: 20px;
-        padding: 8px 18px;
-        font-size: 13px;
-        cursor: pointer;
-    }
-    .tab-nav button:hover { background: #222; }
-    .tab-nav button.active {
-        background: #2d7dd2;
-        color: #fff;
-        border-color: #2d7dd2;
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+/* ===== نتيجة المسافة ===== */
+.result-box{
+    display:none;text-align:center;padding:clamp(20px,4vw,34px);margin-top:16px;
+    background:linear-gradient(135deg,rgba(124,77,255,.35),rgba(0,229,255,.25));
+    animation:fadeUp .4s ease;
+}
+.route-visual{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;}
+.route-point{background:rgba(8,6,32,.5);border:1px solid var(--card-border);border-radius:16px;padding:16px 12px;}
+.route-point-icon{width:54px;height:54px;margin:0 auto 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.route-point-icon.from{background:linear-gradient(135deg,rgba(0,229,255,.25),rgba(0,176,255,.25));box-shadow:0 6px 18px rgba(0,229,255,.3);}
+.route-point-icon.to{background:linear-gradient(135deg,rgba(255,61,154,.25),rgba(255,138,0,.25));box-shadow:0 6px 18px rgba(255,61,154,.3);}
+.route-point-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.route-point-code{font-size:16px;font-weight:800;line-height:1.4;word-break:break-word;}
+.route-line{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:130px;}
+.route-line::before{content:"";position:absolute;top:50%;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--cyan) 0 10px,transparent 10px 18px);transform:translateY(-50%);opacity:.5;}
+.route-line-distance{position:relative;z-index:2;background:linear-gradient(90deg,#7c4dff,#00e5ff);padding:10px 18px;border-radius:999px;font-size:26px;font-weight:900;color:#fff;box-shadow:0 8px 22px rgba(0,176,255,.5);white-space:nowrap;}
+.route-line-distance small{font-size:12px;font-weight:700;opacity:.85;margin-inline-start:2px;}
 
-    .site-footer {
-        margin-top: 40px;
-        padding: 22px 16px 18px;
-        border-top: 1px solid #2a2a2a;
-        text-align: center;
-    }
-    .site-footer .footer-dev {
-        font-size: 13px;
-        color: #ccc;
-        margin-bottom: 10px;
-        letter-spacing: .3px;
-    }
-    .site-footer .footer-dev b {
-        color: #4fc3f7;
-        font-weight: 700;
-    }
-    .site-footer .footer-whatsapp {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #12301c;
-        color: #8fe3a2;
-        border: 1px solid #245c34;
-        border-radius: 20px;
-        padding: 7px 18px;
-        font-size: 13px;
-        text-decoration: none;
-        direction: ltr;
-        transition: background .2s;
-    }
-    .site-footer .footer-whatsapp:hover { background: #16401f; }
-    .site-footer .footer-whatsapp svg { width: 16px; height: 16px; fill: #8fe3a2; }
-    .site-footer .footer-copyright {
-        margin-top: 12px;
-        font-size: 11px;
-        color: #555;
-    }
+/* ===== شريط الإحصائيات ===== */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.stat-card{background:linear-gradient(135deg,rgba(124,77,255,.22),rgba(0,229,255,.15));border:1px solid var(--card-border);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(8px);}
+.stat-card .stat-num{font-size:clamp(22px,4vw,30px);font-weight:900;background:linear-gradient(90deg,#fff,#7df3ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+.stat-card .stat-lbl{font-size:12px;color:var(--muted);font-weight:600;}
+.stat-card.warm{background:linear-gradient(135deg,rgba(255,61,154,.22),rgba(255,138,0,.15));}
+.stat-card.cool{background:linear-gradient(135deg,rgba(34,229,139,.2),rgba(0,229,255,.15));}
 
-    /* ==== نظام دخول المسؤول ==== */
-    .admin-bar {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 10px;
-    }
-    .admin-bar button {
-        background: none;
-        border: 1px solid #444;
-        color: #999;
-        font-size: 12px;
-        padding: 5px 12px;
-        border-radius: 14px;
-        cursor: pointer;
-    }
-    .admin-bar button:hover { background: #1a1a1a; color: #ccc; }
-    .admin-bar .admin-status {
-        font-size: 12px;
-        color: #8fe3a2;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+/* ===== قائمة الأماكن ===== */
+.list-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.list-toolbar input[type=search]{flex:1;min-width:200px;text-align:start;padding-inline-start:16px;}
+.places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:18px;}
+.place-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;transition:transform .15s,background .2s,border-color .2s,box-shadow .2s;position:relative;}
+.place-card:hover{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.45);transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,229,255,.25);}
+.place-card .place-code{font-size:13px;font-weight:800;color:var(--amber);direction:ltr;letter-spacing:1px;display:inline-flex;align-items:center;gap:6px;}
+.place-card .place-code::before{content:"#";opacity:.6;}
+.place-card .place-name{font-size:16px;color:#fff;font-weight:700;line-height:1.4;word-break:break-word;min-height:22px;}
+.place-card .edit-btn{align-self:flex-start;margin-top:6px;font-size:12px;padding:6px 14px;border-radius:999px;background:var(--grad-warm);color:#fff;border:none;cursor:pointer;font-weight:700;transition:transform .15s,box-shadow .2s;}
+.place-card .edit-btn:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(255,61,154,.4);}
+.empty-msg{grid-column:1/-1;text-align:center;padding:44px 16px;color:var(--muted);font-size:15px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.15);border-radius:16px;}
 
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.7);
-        z-index: 100000;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
-        background: #141414;
-        border: 1px solid #444;
-        border-radius: 8px;
-        padding: 24px;
-        width: 90%;
-        max-width: 340px;
-        text-align: center;
-    }
-    .modal-box h3 { margin-top: 0; font-size: 15px; margin-bottom: 14px; }
-    .modal-box input[type="password"] {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #555;
-        background: #222;
-        color: #fff;
-        text-align: center;
-        border-radius: 4px;
-        margin-bottom: 10px;
-    }
-    .modal-box .modal-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        margin-top: 6px;
-    }
-    .modal-box .modal-error {
-        color: #ff9a9a;
-        font-size: 12px;
-        min-height: 16px;
-        margin-bottom: 6px;
-    }
+.footer-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;}
+.info-text{font-size:13px;color:var(--muted);font-weight:600;}
+.pagination{display:flex;gap:6px;flex-wrap:wrap;}
+.pagination button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.pagination button.active{background:var(--grad-main);border-color:transparent;font-weight:800;}
+.pagination button:hover:not(.active):not(:disabled){background:rgba(255,255,255,.2);}
+.pagination button:disabled{opacity:.35;cursor:not-allowed;}
 
-    /* ==== تحديث قاعدة البيانات (رفع ملف) ==== */
-    .upload-box {
-        background: #111;
-        border: 1px solid #444;
-        border-radius: 6px;
-        padding: 18px;
-        margin-top: 10px;
-    }
-    .upload-help {
-        font-size: 12.5px;
-        color: #999;
-        line-height: 1.8;
-        margin: 0 0 14px;
-    }
-    .upload-help code {
-        background: #222;
-        color: #7bd0ff;
-        padding: 1px 6px;
-        border-radius: 3px;
-        direction: ltr;
-        display: inline-block;
-    }
-    .dropzone {
-        border: 2px dashed #444;
-        border-radius: 8px;
-        padding: 34px 16px;
-        text-align: center;
-        cursor: pointer;
-        transition: border-color .2s, background .2s;
-        background: #0b0b0b;
-    }
-    .dropzone:hover { border-color: #2d7dd2; background: #0e1620; }
-    .dropzone.dragover { border-color: #4fc3f7; background: #0e1c26; }
-    .dropzone.has-file { border-color: #245c34; background: #0e1a12; }
-    .dropzone-icon { font-size: 30px; margin-bottom: 8px; opacity: .85; }
-    .dropzone-text { font-size: 13px; color: #ccc; }
-    .dropzone-link { color: #4fc3f7; text-decoration: underline; }
-    .dropzone-filename {
-        margin-top: 10px;
-        font-size: 12px;
-        color: #8fe3a2;
-        direction: ltr;
-        word-break: break-all;
-    }
-    .upload-preview {
-        margin-top: 16px;
-        border-top: 1px solid #2a2a2a;
-        padding-top: 14px;
-    }
-    .upload-preview h3 { font-size: 14px; margin: 0 0 10px; }
-    .upload-preview ul {
-        list-style: none;
-        margin: 0 0 4px;
-        padding: 0;
-        font-size: 13px;
-        color: #ccc;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 6px 14px;
-    }
-    .upload-preview ul li {
-        background: #191919;
-        border: 1px solid #2e2e2e;
-        border-radius: 4px;
-        padding: 8px 10px;
-    }
-    .upload-preview ul li b { color: #4fc3f7; }
-    .upload-download-row {
-        margin-top: 18px;
-        border-top: 1px solid #2a2a2a;
-        padding-top: 14px;
-    }
-    .spinner-inline {
-        display: inline-block;
-        width: 12px; height: 12px;
-        border: 2px solid #555;
-        border-top-color: #4fc3f7;
-        border-radius: 50%;
-        animation: spin .7s linear infinite;
-        margin-inline-end: 6px;
-        vertical-align: -1px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+/* ===== إضافة مكان ===== */
+.add-place-box{padding:clamp(16px,3.5vw,28px);}
+.add-place-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap;}
+
+/* ===== رفع الملف ===== */
+.upload-box{padding:clamp(16px,3.5vw,28px);}
+.upload-help{font-size:14px;color:var(--muted);line-height:1.9;margin:0 0 16px;}
+.upload-help code{background:rgba(0,229,255,.15);color:var(--cyan);padding:2px 10px;border-radius:6px;direction:ltr;display:inline-block;}
+.dropzone{border:2px dashed rgba(255,255,255,.3);border-radius:16px;padding:clamp(28px,6vw,46px) 16px;text-align:center;cursor:pointer;background:rgba(8,6,32,.35);transition:.2s;}
+.dropzone:hover,.dropzone:focus{border-color:var(--cyan);background:rgba(0,229,255,.1);outline:none;}
+.dropzone.dragover{border-color:var(--pink);background:rgba(255,61,154,.15);transform:scale(1.01);}
+.dropzone.has-file{border-color:var(--green);background:rgba(34,229,139,.12);}
+.dropzone-icon{font-size:40px;margin-bottom:10px;}
+.dropzone-text{font-size:15px;}
+.dropzone-link{color:var(--cyan);text-decoration:underline;}
+.dropzone-filename{margin-top:12px;font-size:13px;color:var(--green);direction:ltr;word-break:break-all;}
+.upload-preview{margin-top:20px;border-top:1px solid var(--card-border);padding-top:18px;}
+.upload-preview h3{font-size:16px;margin:0 0 14px;}
+.upload-preview ul{list-style:none;margin:0;padding:0;font-size:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+.upload-preview ul li{background:rgba(255,255,255,.07);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;}
+.upload-preview ul li b{color:var(--amber);}
+.upload-download-row{margin-top:20px;border-top:1px solid var(--card-border);padding-top:18px;}
+.spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;margin-inline-end:8px;vertical-align:-2px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ===== نافذة الدخول والإعدادات ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,5,30,.75);backdrop-filter:blur(6px);z-index:100000;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:linear-gradient(160deg,#241a63,#10204f);border:1px solid var(--card-border);border-radius:22px;padding:30px 24px;width:100%;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:fadeUp .3s ease;}
+.modal-box h3{margin:0 0 16px;font-size:19px;}
+.modal-box input[type="password"], .modal-box input[type="text"]{margin-bottom:10px;}
+.modal-box .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:8px;}
+.modal-box .modal-actions .btn{flex:1;}
+.modal-box .modal-error{color:#ffb3bd;font-size:13px;min-height:20px;margin-bottom:6px;}
+
+/* ===== التذييل ===== */
+.site-footer{margin-top:44px;padding:26px 16px 16px;border-top:1px solid var(--card-border);text-align:center;}
+.site-footer .footer-dev{font-size:14px;color:var(--text);margin-bottom:14px;}
+.site-footer .footer-dev b{color:var(--amber);}
+.site-footer .footer-whatsapp{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#25d366,#0fae5a);color:#fff;border-radius:999px;padding:10px 24px;font-size:14px;font-weight:700;text-decoration:none;direction:ltr;box-shadow:0 8px 22px rgba(37,211,102,.4);transition:.2s;}
+.site-footer .footer-whatsapp:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(37,211,102,.55);}
+.site-footer .footer-whatsapp svg{width:18px;height:18px;fill:#fff;}
+.site-footer .footer-copyright{margin-top:16px;font-size:12px;color:var(--muted);}
+
+/* ===== القائمة الجانبية ===== */
+body{padding:0;}
+.sidebar{position:sticky;top:0;align-self:flex-start;width:280px;flex-shrink:0;height:100vh;display:flex;flex-direction:column;padding:22px 16px 18px;background:linear-gradient(180deg,rgba(14,9,52,.85),rgba(8,20,60,.85));border-inline-end:1px solid var(--card-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:6px 0 30px rgba(0,0,0,.3);z-index:1000;overflow-y:auto;}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:6px 8px 20px;margin-bottom:14px;border-bottom:1px solid var(--card-border);}
+.brand-icon{width:48px;height:48px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:25px;background:var(--grad-warm);box-shadow:0 8px 20px rgba(255,61,154,.45);transform:rotate(-6deg);}
+.brand-text h1{margin:0;font-size:19px;line-height:1.25;font-weight:900;}
+.brand-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+.side-label{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);padding:0 10px;margin:14px 0 8px;opacity:.85;}
+.side-nav{display:flex;flex-direction:column;gap:6px;}
+.nav-item{--a:#00e5ff;--b:#7c4dff;position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;border-radius:14px;background:transparent;color:var(--muted);font:inherit;font-size:15px;font-weight:700;text-align:start;cursor:pointer;transition:background .2s,color .2s,transform .15s;}
+.nav-item[data-tab="tab-distance"]{--a:#00e5ff;--b:#7c4dff;}
+.nav-item[data-tab="tab-add"]{--a:#ff3d9a;--b:#ff8a00;}
+.nav-item[data-tab="tab-list"]{--a:#22e58b;--b:#00b0ff;}
+.nav-item[data-tab="tab-upload"]{--a:#ffb300;--b:#ff5d73;}
+.nav-ico{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);color:var(--a);transition:.2s;}
+.nav-ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.nav-label{flex:1;}
+.nav-badge{font-size:10px;font-weight:700;color:#fff;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,var(--a),var(--b));}
+.nav-item:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateX(-3px);}
+.nav-item:hover .nav-ico{background:rgba(255,255,255,.15);}
+.nav-item.active{color:#fff;background:linear-gradient(135deg,color-mix(in srgb,var(--a) 30%,transparent),color-mix(in srgb,var(--b) 30%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent),0 8px 22px color-mix(in srgb,var(--b) 25%,transparent);}
+.nav-item.active::before{content:"";position:absolute;inset-block:10px;inset-inline-start:-16px;width:5px;border-radius:0 6px 6px 0;background:linear-gradient(var(--a),var(--b));}
+[dir="rtl"] .nav-item.active::before{border-radius:6px 0 0 6px;}
+.nav-item.active .nav-ico{background:linear-gradient(135deg,var(--a),var(--b));color:#fff;}
+.sidebar-spacer{flex:1;min-height:16px;}
+.sidebar-account{background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:12px;}
+.sidebar-account .side-label{margin:0 0 10px;padding:0;}
+.sidebar #adminBar{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:0;}
+.sidebar #adminBar button{width:100%;padding:10px 12px;font-weight:700;}
+.sidebar #adminBar #btnAdminLogin{background:var(--grad-main);border:none;box-shadow:0 6px 16px rgba(0,176,255,.4);}
+.sidebar #adminBar #btnAdminLogout{background:rgba(255,93,115,.18);border-color:rgba(255,93,115,.5);}
+.sidebar #adminBar .admin-status{justify-content:center;font-size:13px;}
+.sidebar-credit{text-align:center;font-size:11px;color:var(--muted);margin-top:12px;}
+.sidebar-credit b{color:var(--amber);}
+
+/* ===== الشريط العلوي للهاتف ===== */
+.mobile-topbar{display:none;position:sticky;top:0;z-index:900;align-items:center;gap:12px;margin:calc(-1 * clamp(14px,3vw,34px)) calc(-1 * clamp(14px,3vw,34px)) 18px;padding:10px 14px;background:rgba(14,9,52,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);}
+.menu-toggle{width:44px;height:44px;border:none;border-radius:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--grad-main);box-shadow:0 6px 16px rgba(0,176,255,.45);}
+.menu-toggle svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;}
+.topbar-title{font-size:17px;font-weight:800;flex:1;}
+.topbar-icon{font-size:24px;}
+.sidebar-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(5,3,25,.65);backdrop-filter:blur(3px);opacity:0;transition:opacity .25s;}
+body.no-scroll{overflow:hidden;}
+
+@media (max-width:900px){
+    .app-shell{display:block;}
+    .sidebar{position:fixed;top:0;inset-inline-start:0;height:100%;width:min(300px,84vw);transform:translateX(100%);transition:transform .3s ease;box-shadow:none;}
+    [dir="ltr"] .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:none!important;box-shadow:-10px 0 40px rgba(0,0,0,.6);}
+    .sidebar-overlay{display:block;pointer-events:none;}
+    .sidebar-overlay.show{opacity:1;pointer-events:auto;}
+    .mobile-topbar{display:flex;}
+    .nav-item:hover{transform:none;}
+}
+@media (min-width:901px){.sidebar-overlay{display:none!important;}}
+
+@media (max-width:720px){
+    .route-grid{grid-template-columns:1fr;gap:12px;}
+    .route-arrow{margin:0 auto;transform:rotate(90deg);width:44px;height:44px;}
+    .form-grid{grid-template-columns:1fr;}
+    .route-visual{grid-template-columns:1fr;gap:10px;}
+    .route-line{min-width:0;min-height:70px;}
+    .route-line::before{top:0;bottom:0;left:50%;right:auto;width:3px;height:auto;background:repeating-linear-gradient(180deg,var(--cyan) 0 10px,transparent 10px 18px);transform:translateX(-50%);}
+    .add-place-actions .btn{flex:1;}
+    .footer-row{justify-content:center;text-align:center;}
+    .places-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+    .place-card{padding:14px;}
+    .place-card .place-name{font-size:15px;}
+}
+@media (max-width:420px){
+    body{font-size:14px;}
+    .brand-icon{width:42px;height:42px;font-size:22px;}
+    .pagination button{padding:7px 11px;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+/* ===================================================================
+   إصلاحات توافق الهاتف — النصوص البيضاء والخلفيات
+   =================================================================== */
+html, body { background-color: #0f0a2e !important; background-image: none !important; color: #ffffff !important; }
+body{ background-attachment:scroll !important; }
+h1, h2{ background:none !important; color:#fff !important; -webkit-text-fill-color:#fff !important; text-shadow:0 2px 14px rgba(0,229,255,.35); }
+.stat-card { background: #18123a !important; border: 1px solid #2d2368 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.stat-card.warm { background: #2a0f2c !important; border-color: #5c1c49 !important; }
+.stat-card.cool { background: #0a2936 !important; border-color: #145b55 !important; }
+.stat-card .stat-num { background: none !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 2px 10px rgba(0,229,255,.35); }
+.stat-card .stat-lbl { color: #c4c9eb !important; font-weight: 700 !important; }
+.brand-text h1{ text-shadow:0 1px 8px rgba(255,61,154,.5); }
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active{ -webkit-text-fill-color:#fff !important; -webkit-box-shadow:0 0 0 1000px rgba(8,6,32,.9) inset !important; transition:background-color 5000s ease-in-out 0s !important; caret-color:#fff !important; }
+input[type="text"], input[type="search"], input[type="password"]{ color:#fff !important; -webkit-text-fill-color:#fff !important; caret-color:#00e5ff !important; }
+.list-toolbar input[type="search"] { background: #151130 !important; border: 2px solid #2d2368 !important; }
+.list-toolbar input[type="search"]::placeholder { color: #8b93ba !important; }
+.list-toolbar .btn { background: #2d2368 !important; border: 1px solid #423596 !important; color: #ffffff !important; }
+.list-toolbar .btn.active { background: linear-gradient(135deg, #7c4dff, #00b0ff) !important; border-color: transparent !important; }
+.place-card { background: #151130 !important; border: 1px solid #2d2368 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.place-card:hover { background: #1a1640 !important; border-color: #00e5ff !important; }
+.place-name { color: #ffffff !important; font-size: 16px !important; font-weight: 700 !important; margin-top: 6px; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.place-code { color: #ffb300 !important; background: rgba(255, 179, 0, 0.15) !important; padding: 4px 10px !important; border-radius: 8px !important; display: inline-block !important; width: max-content !important; font-size: 14px !important; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.route-point-code, .route-line-distance, .route-line-distance small, .place-card .edit-btn { color:#fff !important; -webkit-text-fill-color:#fff !important; }
 </style>
-
 </head>
 <body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
+    <div class="sidebar-brand">
+        <div class="brand-icon" aria-hidden="true">🚚</div>
+        <div class="brand-text">
+            <h1>حساب المسافة</h1>
+            <span>نظام المسافات والأماكن</span>
+        </div>
+    </div>
+    <div class="side-label">القائمة الرئيسية</div>
+    <nav class="side-nav">
+        <button type="button" class="tab-btn nav-item active" data-tab="tab-distance"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg></span><span class="nav-label">حساب المسافة</span></button>
+        <button type="button" class="tab-btn nav-item" data-tab="tab-list"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></span><span class="nav-label">عرض الأماكن والتعديل</span></button>
+        <button type="button" class="tab-btn nav-item" data-tab="tab-add" id="tabAddBtn" style="display:none;"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span><span class="nav-label">إضافة مكان جديد</span><span class="nav-badge">مسؤول</span></button>
+        <button type="button" class="tab-btn nav-item" data-tab="tab-upload" id="tabUploadBtn" style="display:none;"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span><span class="nav-label">تحديث قاعدة البيانات</span><span class="nav-badge">مسؤول</span></button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-account">
+        <div class="side-label">الحساب</div>
+        <div class="admin-bar" id="adminBar"></div>
+    </div>
+    <div class="sidebar-credit">المطوير: <b>ركاب عبدالقادر</b></div>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<main class="main">
+<div class="mobile-topbar">
+    <button type="button" class="menu-toggle" id="btnMenu" aria-label="فتح القائمة" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="topbar-title" id="topbarTitle">حساب المسافة</div>
+    <div class="topbar-icon" aria-hidden="true">🚚</div>
+</div>
 <div class="wrap">
-    <h1>حساب المسافة</h1>
-    <div class="subtitle">بحث فوري وعرض كامل لبيانات المسافات (بدون اتصال بالسيرفر)</div>
-
-    <div class="admin-bar" id="adminBar">
-        <button type="button" id="btnAdminLogin">دخول كمسؤول</button>
-    </div>
-
-    <div class="tab-nav">
-        <button type="button" class="tab-btn active" data-tab="tab-distance">حساب المسافة</button>
-        <button type="button" class="tab-btn" data-tab="tab-add" id="tabAddBtn" style="display:none;">إضافة مكان جديد</button>
-        <button type="button" class="tab-btn" data-tab="tab-list">عرض الأماكن والتعديل</button>
-        <button type="button" class="tab-btn" data-tab="tab-upload" id="tabUploadBtn" style="display:none;">تحديث قاعدة البيانات</button>
-    </div>
-
     <datalist id="codesList"></datalist>
 
-    <!-- ============ القسم 1: حساب المسافة ============ -->
+    <!-- القسم 1: حساب المسافة -->
     <div class="tab-panel active" id="tab-distance">
-        <form id="distanceForm">
-            <table>
-                <tr>
-                    <th>Code Chargement</th>
-                    <th>Code Dechargement</th>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="text" id="lieu_d" name="lieu_d" list="codesList" autocomplete="off" placeholder="مثال: 101001">
-                        <div class="code-name" id="nameD"></div>
-                    </td>
-                    <td>
-                        <input type="text" id="lieu_c" name="lieu_c" list="codesList" autocomplete="off" placeholder="مثال: 101003">
-                        <div class="code-name" id="nameC"></div>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2"><input type="submit" value="ok"></td>
-                </tr>
-            </table>
+        <form id="distanceForm" class="card">
+            <div class="route-grid">
+                <div class="field">
+                    <label for="lieu_d"><span class="dot dot-from"></span>Code Chargement <small>التحميل</small></label>
+                    <input type="text" id="lieu_d" name="lieu_d" list="codesList" autocomplete="off" placeholder="مثال: 101001">
+                    <div class="code-name" id="nameD"></div>
+                </div>
+                <div class="route-arrow" aria-hidden="true">⇄</div>
+                <div class="field">
+                    <label for="lieu_c"><span class="dot dot-to"></span>Code Dechargement <small>التفريغ</small></label>
+                    <input type="text" id="lieu_c" name="lieu_c" list="codesList" autocomplete="off" placeholder="مثال: 101003">
+                    <div class="code-name" id="nameC"></div>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">احسب المسافة</button>
         </form>
 
         <div id="status" class="status"></div>
 
         <div id="resultBox" class="result-box">
-            <div class="sub">المسافة بين <b id="rLieuD"></b> و <b id="rLieuC"></b></div>
-            <div class="big-distance"><span id="rDistance">--</span> Km</div>
+            <div class="route-visual">
+                <div class="route-point">
+                    <div class="route-point-icon from">📦</div>
+                    <div class="route-point-label">التحميل</div>
+                    <div class="route-point-code" id="rLieuD"></div>
+                </div>
+                <div class="route-line">
+                    <div class="route-line-distance"><span id="rDistance">--</span> <small>كم</small></div>
+                </div>
+                <div class="route-point">
+                    <div class="route-point-icon to">📍</div>
+                    <div class="route-point-label">التفريغ</div>
+                    <div class="route-point-code" id="rLieuC"></div>
+                </div>
+            </div>
         </div>
-
-        <div class="stats" id="statsLine"></div>
     </div>
 
-    <!-- ============ القسم 2: إضافة مكان جديد ============ -->
+    <!-- القسم 2: عرض الأماكن -->
+    <div class="tab-panel" id="tab-list">
+        <h2>جميع الأماكن</h2>
+        <div class="stats-bar">
+            <div class="stat-card"><div class="stat-num" id="statPlaces">0</div><div class="stat-lbl">📍 عدد الأماكن</div></div>
+            <div class="stat-card warm"><div class="stat-num" id="statRoutes">0</div><div class="stat-lbl">🛣️ عدد المسارات</div></div>
+            <div class="stat-card cool"><div class="stat-num" id="statShown">0</div><div class="stat-lbl">👁️ المعروضة الآن</div></div>
+        </div>
+        <div class="list-toolbar">
+            <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم...">
+            <button class="btn" id="btnClearSearch">مسح</button>
+            <button class="btn" id="btnToggleShowAll">عرض الكل</button>
+        </div>
+        <div id="listBody" class="places-grid"></div>
+        <div class="footer-row">
+            <div class="info-text" id="listInfo"></div>
+            <div class="pagination" id="paginationBox"></div>
+        </div>
+    </div>
+
+    <!-- القسم 3: إضافة مكان -->
     <div class="tab-panel" id="tab-add">
         <h2 id="addPlaceTitle">إضافة مكان جديد</h2>
         <div class="add-place-box">
             <form id="addPlaceForm">
-                <table>
-                    <tr>
-                        <th>Code (رقم المكان)</th>
-                        <th>اسم المكان</th>
-                    </tr>
-                    <tr>
-                        <td><input type="text" id="newCode" name="newCode" autocomplete="off" placeholder="مثال: 101099"></td>
-                        <td><input type="text" id="newName" name="newName" autocomplete="off" placeholder="اسم المكان"></td>
-                    </tr>
-                </table>
+                <div class="form-grid">
+                    <div class="field"><label for="newCode">Code (رقم المكان)</label><input type="text" id="newCode" name="newCode" autocomplete="off" placeholder="مثال: 101099"></div>
+                    <div class="field"><label for="newName">اسم المكان</label><input type="text" id="newName" name="newName" autocomplete="off" placeholder="اسم المكان"></div>
+                </div>
                 <div class="add-place-actions">
                     <button type="button" class="btn" id="btnCancelEdit" style="display:none;">إلغاء التعديل</button>
                     <button type="submit" class="btn" id="btnSubmitPlace">إضافة المكان</button>
@@ -433,53 +419,25 @@
         </div>
     </div>
 
-    <!-- ============ القسم 3: عرض الأماكن والتعديل ============ -->
-    <div class="tab-panel" id="tab-list">
-        <h2>جميع الأماكن</h2>
-
-        <div class="list-toolbar">
-            <input type="search" id="listSearch" placeholder="بحث بالكود أو الاسم...">
-            <button class="btn" id="btnClearSearch">مسح</button>
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table class="list-table">
-                <thead>
-                    <tr>
-                        <th>Code</th>
-                        <th>المكان</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="listBody"><tr><td colspan="3" class="loading-msg">جارٍ تحميل البيانات...</td></tr></tbody>
-            </table>
-        </div>
-
-        <div class="footer-row">
-            <div class="info-text" id="listInfo"></div>
-            <div class="pagination" id="paginationBox"></div>
-        </div>
-    </div>
-
-    <!-- ============ القسم 4: تحديث قاعدة البيانات (رفع ملف) ============ -->
+    <!-- القسم 4: تحديث قاعدة البيانات -->
     <div class="tab-panel" id="tab-upload">
         <h2>تحديث قاعدة البيانات</h2>
         <div class="upload-box">
             <p class="upload-help">
-                ارفع ملف <code>data.js</code> جديدًا (بنفس صيغة الملف الحالي، أو الصيغة الخام القادمة من نظام ERP) لتحديث
-                جميع الأكواد والأسماء ومسافات المسارات دفعة واحدة، بدل إضافتها واحدة تلو الأخرى.
-                سيتم التحقق من الملف قبل أي تحديث، ولن يُطبَّق شيء إلا بعد تأكيدك.
+                ارفع ملف <code>data.js</code> جديدًا لتحديث جميع الأكواد والأسماء دفعة واحدة.
+                <br><b style="color:var(--amber)">ملاحظة هامة:</b> لتحديث الموقع بشكل دائم لجميع المستخدمين، يجب ربط الحساب بـ GitHub من الإعدادات.
             </p>
-
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <button type="button" class="btn" id="btnOpenSettings">⚙️ إعدادات GitHub (للمسؤول)</button>
+            </div>
+            
             <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="رفع ملف data.js">
                 <input type="file" id="dataFileInput" accept=".js,text/javascript,application/javascript" hidden>
                 <div class="dropzone-icon">⬆️</div>
                 <div class="dropzone-text">اسحب ملف <b>data.js</b> هنا، أو <span class="dropzone-link" id="dropzoneLink">اختر ملفًا من جهازك</span></div>
                 <div class="dropzone-filename" id="dropzoneFilename"></div>
             </div>
-
             <div id="uploadStatus" class="status"></div>
-
             <div id="uploadPreview" class="upload-preview" style="display:none;">
                 <h3>معاينة قبل التأكيد</h3>
                 <ul id="uploadPreviewList"></ul>
@@ -488,12 +446,8 @@
                     <button type="button" class="btn" id="btnConfirmUpload">تأكيد واستبدال البيانات</button>
                 </div>
             </div>
-
             <div class="upload-download-row" id="uploadDownloadRow" style="display:none;">
-                <p class="upload-help">
-                    التحديث أعلاه ينطبق على هذا المتصفح فقط. لتحديث الموقع بشكل دائم لجميع المستخدمين،
-                    نزّل الملف الناتج وارفعه ليحل محل <code>data.js</code> في مستودع المشروع على GitHub.
-                </p>
+                <p class="upload-help">التحديث تم في المتصفح الحالي. لتحديثه للجميع، قم بتنزيل الملف واستبداله في GitHub يدوياً، أو استخدم إعدادات GitHub بالأعلى للحفظ التلقائي.</p>
                 <button type="button" class="btn" id="btnDownloadData">⬇ تنزيل data.js المحدَّث</button>
             </div>
         </div>
@@ -508,7 +462,10 @@
         <div class="footer-copyright">© جميع الحقوق محفوظة</div>
     </footer>
 </div>
+</main>
+</div>
 
+<!-- نافذة الدخول -->
 <div class="modal-overlay" id="loginModal">
     <div class="modal-box">
         <h3>دخول المسؤول</h3>
@@ -521,18 +478,102 @@
     </div>
 </div>
 
-<!-- ملف البيانات منفصل: يحتوي على codeNamesArr و records -->
-<script src="data.js"></script>
+<!-- نافذة إعدادات GitHub -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+        <h3>إعدادات GitHub للحفظ التلقائي</h3>
+        <div class="modal-error" id="settingsError"></div>
+        <label style="text-align:right; font-size:13px; margin-bottom:8px;">GitHub Token (صلاحية repo)</label>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <label style="text-align:right; font-size:13px; margin-bottom:8px;">اسم المستخدم (Owner)</label>
+        <input type="text" id="ghOwner" placeholder="مثال: ikraakhemis-maker">
+        <label style="text-align:right; font-size:13px; margin-bottom:8px;">اسم المستودع (Repo)</label>
+        <input type="text" id="ghRepo" placeholder="مثال: dis">
+        <label style="text-align:right; font-size:13px; margin-bottom:8px;">مسار الملف (Path)</label>
+        <input type="text" id="ghPath" placeholder="data.js" value="data.js">
+        
+        <div class="modal-actions" style="margin-top:20px;">
+            <button type="button" class="btn" id="btnCancelSettings">إلغاء</button>
+            <button type="button" class="btn" id="btnSaveSettings">حفظ الإعدادات</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// تحميل data.js مع رقم فريد في كل فتح حتى لا يستعمل المتصفح/التطبيق النسخة القديمة المخزّنة (cache)
+document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script>
+// ==================== إعدادات GitHub ====================
+const GH_CONFIG_KEY = "ghConfigRekab";
+function getGhConfig() {
+    try { return JSON.parse(localStorage.getItem(GH_CONFIG_KEY)) || {}; } catch(e){ return {}; }
+}
+function saveGhConfig(cfg) {
+    localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(cfg));
+}
+// فتح وإغلاق نافذة الإعدادات
+document.getElementById('btnOpenSettings').addEventListener('click', function(){
+    const cfg = getGhConfig();
+    document.getElementById('ghToken').value = cfg.token || '';
+    document.getElementById('ghOwner').value = cfg.owner || 'ikraakhemis-maker';
+    document.getElementById('ghRepo').value = cfg.repo || 'dis';
+    document.getElementById('ghPath').value = cfg.path || 'data.js';
+    document.getElementById('settingsError').textContent = '';
+    document.getElementById('settingsModal').classList.add('show');
+});
+document.getElementById('btnCancelSettings').addEventListener('click', function(){
+    document.getElementById('settingsModal').classList.remove('show');
+});
+// ---- مساعدات GitHub ----
+function ghHeaders(token){ return { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }; }
+async function ghFetch(url, opts){
+    try{ return await fetch(url, opts); }
+    catch(e){ throw new Error('تعذّر الاتصال بـ GitHub. تأكد من اتصال الإنترنت ثم أعد المحاولة.'); }
+}
+async function ghApiMessage(res){ try{ const j = await res.json(); return j && j.message ? j.message : ''; }catch(e){ return ''; } }
+function ghErrorText(status, apiMsg){
+    if(status === 401) return 'Token غير صالح أو منتهي الصلاحية (401). أنشئ Token جديداً من GitHub وأدخله في الإعدادات.';
+    if(status === 403) return 'GitHub رفض العملية (403). تأكد أن Token يملك صلاحية الكتابة (Contents: Read and write) على هذا المستودع. ' + (apiMsg || '');
+    if(status === 404) return 'المستودع غير موجود أو Token لا يملك وصولاً إليه (404). تأكد من اسم المستخدم واسم المستودع وصلاحيات Token.';
+    if(status === 409 || status === 422) return 'تعارض أثناء الحفظ (' + status + '): ' + (apiMsg || '') + ' — أعد المحاولة.';
+    return 'خطأ من GitHub (' + status + '): ' + (apiMsg || '');
+}
+// يتحقق من Token والمستودع وصلاحية الكتابة، ويعيد معلومات المستودع
+async function ghCheckAccess(cfg){
+    const res = await ghFetch('https://api.github.com/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo), { headers: ghHeaders(cfg.token), cache: 'no-store' });
+    if(!res.ok) throw new Error(ghErrorText(res.status, await ghApiMessage(res)));
+    const info = await res.json();
+    if(info.permissions && info.permissions.push === false) throw new Error('Token يملك صلاحية القراءة فقط. أنشئ Token بصلاحية الكتابة (Contents: Read and write).');
+    return info;
+}
+
+document.getElementById('btnSaveSettings').addEventListener('click', async function(){
+    const token = document.getElementById('ghToken').value.trim();
+    const owner = document.getElementById('ghOwner').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    const path = document.getElementById('ghPath').value.trim() || 'data.js';
+    const errEl = document.getElementById('settingsError');
+    if(!token || !owner || !repo) {
+        errEl.textContent = 'الرجاء ملء جميع الحقول المطلوبة.';
+        return;
+    }
+    saveGhConfig({ token, owner, repo, path });
+    errEl.textContent = 'جارٍ التحقق من الاتصال بـ GitHub...';
+    try{
+        const info = await ghCheckAccess({ token, owner, repo });
+        document.getElementById('settingsModal').classList.remove('show');
+        alert('✅ تم الاتصال بـ GitHub بنجاح (' + info.full_name + '). يمكنك الآن رفع قاعدة البيانات من الموقع.');
+    }catch(err){
+        errEl.textContent = '❌ ' + err.message;
+    }
+});
 
 // ==================== نظام دخول المسؤول ====================
 (function(){
-    // كلمة السر مخزّنة بترميز Base64 (تصعيب بسيط، وليست حماية حقيقية من جهة الخادم)
     const ADMIN_PASS_ENC = "cmVrYWJhYmRlbGthZGVyMTk4MUA=";
     const ADMIN_KEY = "isAdminRekab";
-
     const adminBar = document.getElementById('adminBar');
-    const btnAdminLogin = document.getElementById('btnAdminLogin');
     const tabAddBtn = document.getElementById('tabAddBtn');
     const tabUploadBtn = document.getElementById('tabUploadBtn');
     const loginModal = document.getElementById('loginModal');
@@ -540,28 +581,18 @@
     const adminPasswordInput = document.getElementById('adminPasswordInput');
     const btnCancelLogin = document.getElementById('btnCancelLogin');
     const btnConfirmLogin = document.getElementById('btnConfirmLogin');
-
-    // احتياط في حال تعذّر الوصول لـ localStorage (مثلاً عند فتح الملف مباشرة file://
-    // أو التصفح الخاص): يبقى الدخول فعّالاً لهذه الجلسة فقط دون أن يتعطّل التطبيق.
     let adminSessionFallback = false;
 
     function isAdmin(){
-        try{
-            return localStorage.getItem(ADMIN_KEY) === 'true' || adminSessionFallback;
-        }catch(e){
-            return adminSessionFallback;
-        }
+        try{ return localStorage.getItem(ADMIN_KEY) === 'true' || adminSessionFallback; }
+        catch(e){ return adminSessionFallback; }
     }
-
     function openLoginModal(){
-        loginError.textContent = '';
-        adminPasswordInput.value = '';
+        loginError.textContent = ''; adminPasswordInput.value = '';
         loginModal.classList.add('show');
         setTimeout(function(){ adminPasswordInput.focus(); }, 50);
     }
-    function closeLoginModal(){
-        loginModal.classList.remove('show');
-    }
+    function closeLoginModal(){ loginModal.classList.remove('show'); }
 
     function renderAdminBar(){
         if(isAdmin()){
@@ -569,8 +600,7 @@
             document.getElementById('btnAdminLogout').addEventListener('click', function(){
                 adminSessionFallback = false;
                 try{ localStorage.removeItem(ADMIN_KEY); }catch(e){}
-                applyAdminVisibility();
-                renderAdminBar();
+                applyAdminVisibility(); renderAdminBar();
                 if(typeof switchTab === 'function') switchTab('tab-distance');
             });
         } else {
@@ -578,133 +608,64 @@
             document.getElementById('btnAdminLogin').addEventListener('click', openLoginModal);
         }
     }
-
     function applyAdminVisibility(){
         tabAddBtn.style.display = isAdmin() ? '' : 'none';
         if(tabUploadBtn) tabUploadBtn.style.display = isAdmin() ? '' : 'none';
-        // إعادة رسم قائمة الأماكن لإظهار/إخفاء أزرار التعديل حسب صلاحية المستخدم
         if(typeof renderList === 'function') renderList();
     }
-
-    btnAdminLogin.addEventListener('click', openLoginModal);
     btnCancelLogin.addEventListener('click', closeLoginModal);
-    loginModal.addEventListener('click', function(e){
-        if(e.target === loginModal) closeLoginModal();
-    });
-
+    loginModal.addEventListener('click', function(e){ if(e.target === loginModal) closeLoginModal(); });
     function attemptLogin(){
-        const entered = adminPasswordInput.value;
-        if(entered === atob(ADMIN_PASS_ENC)){
+        if(adminPasswordInput.value === atob(ADMIN_PASS_ENC)){
             adminSessionFallback = true;
             try{ localStorage.setItem(ADMIN_KEY, 'true'); }catch(e){}
-            closeLoginModal();
-            applyAdminVisibility();
-            renderAdminBar();
-        } else {
-            loginError.textContent = 'كلمة السر غير صحيحة.';
-        }
+            closeLoginModal(); applyAdminVisibility(); renderAdminBar();
+        } else { loginError.textContent = 'كلمة السر غير صحيحة.'; }
     }
-
     btnConfirmLogin.addEventListener('click', attemptLogin);
-    adminPasswordInput.addEventListener('keydown', function(e){
-        if(e.key === 'Enter') attemptLogin();
-    });
-
-    // إتاحة دوال الإدارة للاستخدام من بقية السكربت (renderList)
+    adminPasswordInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') attemptLogin(); });
     window.__isAdmin = isAdmin;
     window.__applyAdminVisibility = applyAdminVisibility;
-
     renderAdminBar();
-    // تطبيق الإخفاء الأولي فور تحميل الصفحة (سيُعاد تطبيقه لاحقًا بعد renderList الأول)
     tabAddBtn.style.display = isAdmin() ? '' : 'none';
     if(tabUploadBtn) tabUploadBtn.style.display = isAdmin() ? '' : 'none';
 })();
 
-// ---------- التبديل بين التبويبات (الأقسام الثلاثة) ----------
+// التبديل بين التبويبات
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabPanels = document.querySelectorAll('.tab-panel');
-
 function switchTab(tabId){
-    // حماية إضافية: منع فتح تبويب "إضافة مكان جديد" أو "تحديث قاعدة البيانات" لغير المسؤول حتى لو تم استدعاؤه برمجيًا
     if((tabId === 'tab-add' || tabId === 'tab-upload') && !(window.__isAdmin && window.__isAdmin())){
-        if(typeof document !== 'undefined'){
-            const modal = document.getElementById('loginModal');
-            if(modal){
-                document.getElementById('loginError').textContent = '';
-                document.getElementById('adminPasswordInput').value = '';
-                modal.classList.add('show');
-            }
-        }
+        const modal = document.getElementById('loginModal');
+        if(modal){ document.getElementById('loginError').textContent = ''; document.getElementById('adminPasswordInput').value = ''; modal.classList.add('show'); }
         return;
     }
-    tabPanels.forEach(function(panel){
-        panel.classList.toggle('active', panel.id === tabId);
-    });
-    tabButtons.forEach(function(btn){
-        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
-    });
+    tabPanels.forEach(function(p){ p.classList.toggle('active', p.id === tabId); });
+    tabButtons.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === tabId); });
 }
+tabButtons.forEach(function(btn){ btn.addEventListener('click', function(){ switchTab(btn.getAttribute('data-tab')); }); });
 
-tabButtons.forEach(function(btn){
-    btn.addEventListener('click', function(){
-        switchTab(btn.getAttribute('data-tab'));
-    });
-});
-
+// تجهيز البيانات
 const codeNames = {};
-// أسماء الأماكن التفصيلية (أكواد من 6 أرقام) من مصفوفة lieu
-if(typeof lieu !== 'undefined'){
-    lieu.forEach(function(item){
-        if(item[1]) codeNames[item[0]] = item[1];
-    });
-}
-// أسماء المناطق العامة من codeNamesArr (لا تُستبدل الأسماء التفصيلية إن وُجدت مسبقاً)
-codeNamesArr.forEach(function(item){
-    if(!codeNames[item[0]]) codeNames[item[0]] = item[1];
-});
+if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; }); }
+codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
 
-// ---------- الأماكن المضافة يدويًا (تُحفظ محليًا في المتصفح) ----------
 const CUSTOM_PLACES_KEY = 'customPlaces_v1';
-
-function loadCustomPlaces(){
-    try{
-        const raw = localStorage.getItem(CUSTOM_PLACES_KEY);
-        return raw ? JSON.parse(raw) : {};
-    }catch(e){
-        return {};
-    }
-}
-
-function saveCustomPlaces(obj){
-    try{
-        localStorage.setItem(CUSTOM_PLACES_KEY, JSON.stringify(obj));
-        return true;
-    }catch(e){
-        return false;
-    }
-}
-
+function loadCustomPlaces(){ try{ const raw = localStorage.getItem(CUSTOM_PLACES_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
+function saveCustomPlaces(obj){ try{ localStorage.setItem(CUSTOM_PLACES_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
 let customPlaces = loadCustomPlaces();
-// دمج الأماكن المضافة يدويًا فوق القائمة الأصلية (لها الأولوية)
-Object.keys(customPlaces).forEach(function(code){
-    codeNames[code] = customPlaces[code];
-});
+Object.keys(customPlaces).forEach(function(code){ codeNames[code] = customPlaces[code]; });
 
 const distanceMap = {};
-records.forEach(function(r){
-    distanceMap[r[0] + '|' + r[1]] = r[2];
-});
+records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
 
-// ---------- تبويب البحث عن مسافة بين كودين ----------
 const datalist = document.getElementById('codesList');
-let dlHtml = '';
-Object.keys(codeNames).forEach(function(code){
-    dlHtml += "<option value='" + code + "'>" + code + " - " + codeNames[code] + "</option>";
-});
-datalist.innerHTML = dlHtml;
-
-document.getElementById('statsLine').textContent =
-    'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
+function rebuildDatalist(){
+    let dlHtml = '';
+    Object.keys(codeNames).forEach(function(code){ dlHtml += "<option value='" + code + "'>" + code + " - " + codeNames[code] + "</option>"; });
+    datalist.innerHTML = dlHtml;
+}
+rebuildDatalist();
 
 const lieuD = document.getElementById('lieu_d');
 const lieuC = document.getElementById('lieu_c');
@@ -716,155 +677,87 @@ const rDistance = document.getElementById('rDistance');
 const rLieuD = document.getElementById('rLieuD');
 const rLieuC = document.getElementById('rLieuC');
 
-function setStatus(type, msg){
-    if(!type){ statusDiv.style.display = 'none'; return; }
-    statusDiv.className = 'status ' + type;
-    statusDiv.textContent = msg;
-}
-
-function showNameHint(input, target){
-    const v = input.value.trim();
-    target.textContent = codeNames[v] ? codeNames[v] : '';
-}
-
+function setStatus(type, msg){ if(!type){ statusDiv.style.display = 'none'; return; } statusDiv.className = 'status ' + type; statusDiv.textContent = msg; }
+function showNameHint(input, target){ const v = input.value.trim(); target.textContent = codeNames[v] ? codeNames[v] : ''; }
 lieuD.addEventListener('input', function(){ showNameHint(lieuD, nameD); });
 lieuC.addEventListener('input', function(){ showNameHint(lieuC, nameC); });
 
 document.getElementById('distanceForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    resultBox.style.display = 'none';
-
-    const a = lieuD.value.trim();
-    const b = lieuC.value.trim();
-
-    if(!a || !b){
-        setStatus('error', 'الرجاء إدخال كودي التحميل والتفريغ.');
-        return;
-    }
-
-    let km = distanceMap[a + '|' + b];
-    let reversed = false;
-
-    if(km === undefined){
-        km = distanceMap[b + '|' + a];
-        reversed = true;
-    }
-
-    if(km === undefined){
-        setStatus('error', 'لا توجد بيانات مسافة مسجّلة بين هذين الكودين في قاعدة البيانات.');
-        return;
-    }
-
+    e.preventDefault(); resultBox.style.display = 'none';
+    const a = lieuD.value.trim(), b = lieuC.value.trim();
+    if(!a || !b){ setStatus('error', 'الرجاء إدخال كودي التحميل والتفريغ.'); return; }
+    let km = distanceMap[a + '|' + b]; let reversed = false;
+    if(km === undefined){ km = distanceMap[b + '|' + a]; reversed = true; }
+    if(km === undefined){ setStatus('error', 'لا توجد بيانات مسافة مسجّلة بين هذين الكودين.'); return; }
     rLieuD.textContent = a + (codeNames[a] ? ' - ' + codeNames[a] : '');
     rLieuC.textContent = b + (codeNames[b] ? ' - ' + codeNames[b] : '');
-    rDistance.textContent = km;
-    resultBox.style.display = 'block';
-
-    if(reversed){
-        setStatus('warn', 'تنبيه: لا يوجد سجل مباشر لهذا الاتجاه، تم عرض مسافة الاتجاه المعاكس (' + b + ' → ' + a + ').');
-    } else {
-        setStatus('ok', 'تم العثور على المسافة.');
-    }
+    rDistance.textContent = km; resultBox.style.display = 'block';
+    if(reversed) setStatus('warn', 'تنبيه: تم عرض مسافة الاتجاه المعاكس.');
+    else setStatus('ok', 'تم العثور على المسافة.');
 });
 
-// ---------- تبويب عرض جميع الأماكن ----------
+// عرض الأماكن
 const listBody = document.getElementById('listBody');
 const listInfo = document.getElementById('listInfo');
 const paginationBox = document.getElementById('paginationBox');
 const listSearch = document.getElementById('listSearch');
 const btnClearSearch = document.getElementById('btnClearSearch');
+const btnToggleShowAll = document.getElementById('btnToggleShowAll');
+const statPlaces = document.getElementById('statPlaces');
+const statRoutes = document.getElementById('statRoutes');
+const statShown = document.getElementById('statShown');
 
-// بناء قائمة الأماكن (Code + الاسم) من كائن codeNames، مرتبة حسب الكود
-const places = Object.keys(codeNames)
-    .map(function(code){ return [code, codeNames[code]]; })
-    .sort(function(x, y){ return x[0].localeCompare(y[0]); });
+const places = Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); });
+const PAGE_SIZE = 60; let filteredPlaces = places; let currentPage = 1; let showAll = false;
 
-const PAGE_SIZE = 50;
-let filteredPlaces = places;
-let currentPage = 1;
-
-function escapeHtml(str){
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-}
+function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function updateStats(){ statPlaces.textContent = Object.keys(codeNames).length.toLocaleString('en-US'); statRoutes.textContent = records.length.toLocaleString('en-US'); statShown.textContent = filteredPlaces.length.toLocaleString('en-US'); }
 
 function applyFilter(query){
     query = (query || '').trim().toLowerCase();
-    if(!query){
-        filteredPlaces = places;
-    } else {
-        filteredPlaces = places.filter(function(p){
-            const code = p[0], name = (p[1] || '').toLowerCase();
-            return code.toLowerCase().includes(query) || name.includes(query);
-        });
-    }
-    currentPage = 1;
-    renderList();
+    if(!query){ filteredPlaces = places; }
+    else { filteredPlaces = places.filter(function(p){ const code = p[0], name = (p[1] || '').toLowerCase(); return code.toLowerCase().includes(query) || name.includes(query); }); }
+    currentPage = 1; renderList();
 }
 
 function renderList(){
     const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
     if(currentPage > totalPages) currentPage = totalPages;
     if(currentPage < 1) currentPage = 1;
-
-    const startIdx = (currentPage - 1) * PAGE_SIZE;
-    const pageItems = filteredPlaces.slice(startIdx, startIdx + PAGE_SIZE);
+    const startIdx = showAll ? 0 : (currentPage - 1) * PAGE_SIZE;
+    const pageItems = showAll ? filteredPlaces : filteredPlaces.slice(startIdx, startIdx + PAGE_SIZE);
     const userIsAdmin = !!(window.__isAdmin && window.__isAdmin());
 
-    if(pageItems.length === 0){
-        listBody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:16px;'>لا توجد نتائج</td></tr>";
-    } else {
-        let rowsHtml = '';
+    if(pageItems.length === 0){ listBody.innerHTML = "<div class='empty-msg'>🔍 لا توجد نتائج مطابقة للبحث</div>"; }
+    else {
+        let html = '';
         pageItems.forEach(function(p){
             const code = p[0], name = p[1];
             const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
-            const actionCell = userIsAdmin
-                ? "<button type='button' class='btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>تعديل</button>"
-                : "<span style='color:#555; font-size:12px;'>—</span>";
-            rowsHtml += "<tr>" +
-                "<td>" + escapeHtml(code) + "</td>" +
-                "<td>" + escapeHtml(name || '') + "</td>" +
-                "<td>" + actionCell + "</td>" +
-                "</tr>";
+            const editBtn = userIsAdmin ? "<button type='button' class='edit-btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>✎ تعديل</button>" : '';
+            html += "<div class='place-card'><div class='place-code'>" + escapeHtml(code) + "</div><div class='place-name'>" + escapeHtml(name || '—') + "</div>" + editBtn + "</div>";
         });
-        listBody.innerHTML = rowsHtml;
+        listBody.innerHTML = html;
     }
-
-    listInfo.textContent = 'عرض ' + (filteredPlaces.length === 0 ? 0 : startIdx + 1) + ' إلى ' +
-        Math.min(startIdx + PAGE_SIZE, filteredPlaces.length) + ' من أصل ' + filteredPlaces.length + ' مكان';
-
-    renderPagination(currentPage, totalPages);
+    if(showAll){ listInfo.textContent = 'عرض جميع الأماكن (' + filteredPlaces.length.toLocaleString('en-US') + ')'; }
+    else { listInfo.textContent = 'عرض ' + (filteredPlaces.length === 0 ? 0 : startIdx + 1) + ' إلى ' + Math.min(startIdx + PAGE_SIZE, filteredPlaces.length) + ' من أصل ' + filteredPlaces.length.toLocaleString('en-US') + ' مكان'; }
+    updateStats(); renderPagination(currentPage, totalPages);
 }
 
 function renderPagination(current, totalPages){
-    let html = '';
-    html += "<button " + (current<=1?'disabled':'') + " onclick='goToPage(" + (current-1) + ")'>&laquo; Préc</button>";
-
-    const start = Math.max(1, current - 2);
-    const end = Math.min(totalPages, current + 2);
-    for(let p = start; p <= end; p++){
-        html += "<button class='" + (p===current?'active':'') + "' onclick='goToPage(" + p + ")'>" + p + "</button>";
-    }
-
-    html += "<button " + (current>=totalPages?'disabled':'') + " onclick='goToPage(" + (current+1) + ")'>Suiv &raquo;</button>";
+    if(showAll){ paginationBox.innerHTML = ''; return; }
+    let html = "<button " + (current<=1?'disabled':'') + " onclick='goToPage(" + (current-1) + ")'>&laquo; السابق</button>";
+    const start = Math.max(1, current - 2); const end = Math.min(totalPages, current + 2);
+    for(let p = start; p <= end; p++){ html += "<button class='" + (p===current?'active':'') + "' onclick='goToPage(" + p + ")'>" + p + "</button>"; }
+    html += "<button " + (current>=totalPages?'disabled':'') + " onclick='goToPage(" + (current+1) + ")'>التالي &raquo;</button>";
     paginationBox.innerHTML = html;
 }
+function goToPage(p){ currentPage = p; renderList(); }
+listSearch.addEventListener('input', function(){ applyFilter(listSearch.value); });
+btnClearSearch.addEventListener('click', function(){ listSearch.value = ''; applyFilter(''); });
+btnToggleShowAll.addEventListener('click', function(){ showAll = !showAll; this.textContent = showAll ? 'عرض بالصفحات' : 'عرض الكل'; this.classList.toggle('active', showAll); currentPage = 1; renderList(); });
 
-function goToPage(p){
-    currentPage = p;
-    renderList();
-}
-
-listSearch.addEventListener('input', function(){
-    applyFilter(listSearch.value);
-});
-btnClearSearch.addEventListener('click', function(){
-    listSearch.value = '';
-    applyFilter('');
-});
-
-// ---------- إضافة / تعديل مكان ----------
+// إضافة / تعديل
 const addPlaceForm = document.getElementById('addPlaceForm');
 const addPlaceStatus = document.getElementById('addPlaceStatus');
 const addPlaceTitle = document.getElementById('addPlaceTitle');
@@ -872,119 +765,34 @@ const newCodeInput = document.getElementById('newCode');
 const newNameInput = document.getElementById('newName');
 const btnSubmitPlace = document.getElementById('btnSubmitPlace');
 const btnCancelEdit = document.getElementById('btnCancelEdit');
+let editingCode = null;
 
-let editingCode = null; // null = وضع إضافة، غير ذلك = وضع تعديل لهذا الكود
-
-function setAddPlaceStatus(type, msg){
-    if(!type){ addPlaceStatus.style.display = 'none'; return; }
-    addPlaceStatus.className = 'status ' + type;
-    addPlaceStatus.textContent = msg;
-}
-
-function enterEditMode(code){
-    editingCode = code;
-    newCodeInput.value = code;
-    newCodeInput.disabled = true;
-    newNameInput.value = codeNames[code] || '';
-    addPlaceTitle.textContent = 'تعديل المكان: ' + code;
-    btnSubmitPlace.textContent = 'حفظ التعديل';
-    btnCancelEdit.style.display = '';
-    setAddPlaceStatus(null);
-    switchTab('tab-add');
-    newNameInput.focus();
-}
-
-function exitEditMode(){
-    editingCode = null;
-    newCodeInput.disabled = false;
-    addPlaceTitle.textContent = 'إضافة مكان جديد';
-    btnSubmitPlace.textContent = 'إضافة المكان';
-    btnCancelEdit.style.display = 'none';
-    addPlaceForm.reset();
-    switchTab('tab-list');
-}
-
-// تُستدعى من زر "تعديل" في جدول الأماكن (انظر renderList)
-function startEditPlace(code){
-    if(!(window.__isAdmin && window.__isAdmin())) return;
-    if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return;
-    enterEditMode(code);
-}
-
-btnCancelEdit.addEventListener('click', function(){
-    exitEditMode();
-    setAddPlaceStatus(null);
-});
+function setAddPlaceStatus(type, msg){ if(!type){ addPlaceStatus.style.display = 'none'; return; } addPlaceStatus.className = 'status ' + type; addPlaceStatus.textContent = msg; }
+function enterEditMode(code){ editingCode = code; newCodeInput.value = code; newCodeInput.disabled = true; newNameInput.value = codeNames[code] || ''; addPlaceTitle.textContent = 'تعديل المكان: ' + code; btnSubmitPlace.textContent = 'حفظ التعديل'; btnCancelEdit.style.display = ''; setAddPlaceStatus(null); switchTab('tab-add'); newNameInput.focus(); }
+function exitEditMode(){ editingCode = null; newCodeInput.disabled = false; addPlaceTitle.textContent = 'إضافة مكان جديد'; btnSubmitPlace.textContent = 'إضافة المكان'; btnCancelEdit.style.display = 'none'; addPlaceForm.reset(); switchTab('tab-list'); }
+function startEditPlace(code){ if(!(window.__isAdmin && window.__isAdmin())) return; if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return; enterEditMode(code); }
+btnCancelEdit.addEventListener('click', function(){ exitEditMode(); setAddPlaceStatus(null); });
 
 addPlaceForm.addEventListener('submit', function(e){
     e.preventDefault();
-
-    if(!(window.__isAdmin && window.__isAdmin())){
-        setAddPlaceStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.');
-        return;
-    }
-
-    const code = editingCode ? editingCode : newCodeInput.value.trim();
-    const name = newNameInput.value.trim();
-
-    if(!code || !name){
-        setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.');
-        return;
-    }
-
+    if(!(window.__isAdmin && window.__isAdmin())){ setAddPlaceStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.'); return; }
+    const code = editingCode ? editingCode : newCodeInput.value.trim(); const name = newNameInput.value.trim();
+    if(!code || !name){ setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.'); return; }
     const isUpdate = editingCode !== null || Object.prototype.hasOwnProperty.call(codeNames, code);
-
-    // تحديث القاموس والتخزين المحلي
-    codeNames[code] = name;
-    customPlaces[code] = name;
-    const saved = saveCustomPlaces(customPlaces);
-
-    // تحديث القائمة المنسدلة (datalist) الخاصة بحساب المسافة
+    codeNames[code] = name; customPlaces[code] = name; const saved = saveCustomPlaces(customPlaces);
     const escapedCode = code.replace(/'/g, "\\'");
     let existingOpt = datalist.querySelector("option[value='" + escapedCode + "']");
-    if(!existingOpt){
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = code + ' - ' + name;
-        datalist.appendChild(opt);
-    } else {
-        existingOpt.textContent = code + ' - ' + name;
-    }
-
-    // تحديث/إضافة السطر في مصفوفة الأماكن ثم إعادة الترتيب والعرض
+    if(!existingOpt){ const opt = document.createElement('option'); opt.value = code; opt.textContent = code + ' - ' + name; datalist.appendChild(opt); } else { existingOpt.textContent = code + ' - ' + name; }
     const idx = places.findIndex(function(p){ return p[0] === code; });
-    if(idx >= 0){
-        places[idx][1] = name;
-    } else {
-        places.push([code, name]);
-    }
+    if(idx >= 0){ places[idx][1] = name; } else { places.push([code, name]); }
     places.sort(function(x, y){ return x[0].localeCompare(y[0]); });
-
-    document.getElementById('statsLine').textContent =
-        'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
-
-    applyFilter(listSearch.value);
-
-    const wasEditing = editingCode !== null;
-
-    if(!saved){
-        setAddPlaceStatus('warn', 'تم الحفظ لهذه الجلسة فقط، لكن تعذّر حفظه بشكل دائم في هذا المتصفح.');
-    } else if(wasEditing || isUpdate){
-        setAddPlaceStatus('ok', 'تم تحديث اسم المكان بالكود ' + code + ' بنجاح.');
-    } else {
-        setAddPlaceStatus('ok', 'تمت إضافة المكان "' + name + '" بالكود ' + code + ' بنجاح، وسيبقى محفوظًا في هذا المتصفح.');
-    }
-
-    if(wasEditing){
-        exitEditMode();
-    } else {
-        addPlaceForm.reset();
-    }
+    applyFilter(listSearch.value); const wasEditing = editingCode !== null;
+    if(!saved) setAddPlaceStatus('warn', 'تم الحفظ محلياً فقط.'); else if(wasEditing || isUpdate) setAddPlaceStatus('ok', 'تم تحديث اسم المكان بنجاح.'); else setAddPlaceStatus('ok', 'تمت إضافة المكان بنجاح.');
+    if(wasEditing) exitEditMode(); else addPlaceForm.reset();
 });
-
 renderList();
 
-// ---------- تبويب تحديث قاعدة البيانات (رفع ملف data.js) ----------
+// رفع الملف + GitHub API
 (function(){
     const dropzone = document.getElementById('dropzone');
     const dropzoneLink = document.getElementById('dropzoneLink');
@@ -997,190 +805,141 @@ renderList();
     const btnConfirmUpload = document.getElementById('btnConfirmUpload');
     const uploadDownloadRow = document.getElementById('uploadDownloadRow');
     const btnDownloadData = document.getElementById('btnDownloadData');
+    const MAX_FILE_SIZE = 15 * 1024 * 1024;
+    let pendingUpload = null;
 
-    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB كحد أقصى معقول لملف بيانات نصي
-    let pendingUpload = null; // { data:{...}, raw:string, fileName:string }
-
-    function setUploadStatus(type, msg){
-        if(!type){ uploadStatus.style.display = 'none'; return; }
-        uploadStatus.className = 'status ' + type;
-        uploadStatus.innerHTML = msg;
-    }
-
-    function resetDropzoneVisual(){
-        dropzone.classList.remove('has-file');
-        dropzoneFilename.textContent = '';
-    }
-
-    function resetUploadFlow(keepStatus){
-        pendingUpload = null;
-        uploadPreview.style.display = 'none';
-        uploadPreviewList.innerHTML = '';
-        uploadDownloadRow.style.display = 'none';
-        dataFileInput.value = '';
-        resetDropzoneVisual();
-        if(!keepStatus) setUploadStatus(null);
-    }
-
-    // يحوّل صيغة "unite" الخام (كما تصل من ERP عبر sync_data.py) لنفس تسمية الموقع المستخدمة في data.js.
-    function renameUniteVariable(content){
-        if(/\bvar\s+unite\s*=/.test(content) && !/\bvar\s+codeNamesArr\s*=|\bconst\s+codeNamesArr\s*=/.test(content)){
-            return content.replace(/var\s+unite\s*=/, 'var codeNamesArr =');
-        }
-        return content;
-    }
+    function setUploadStatus(type, msg){ if(!type){ uploadStatus.style.display = 'none'; return; } uploadStatus.className = 'status ' + type; uploadStatus.innerHTML = msg; }
+    function resetDropzoneVisual(){ dropzone.classList.remove('has-file'); dropzoneFilename.textContent = ''; }
+    function resetUploadFlow(keepStatus){ pendingUpload = null; uploadPreview.style.display = 'none'; uploadPreviewList.innerHTML = ''; uploadDownloadRow.style.display = 'none'; dataFileInput.value = ''; resetDropzoneVisual(); if(!keepStatus) setUploadStatus(null); }
 
     function parseDataFile(content){
-        const src = renameUniteVariable(content);
+        let src = content;
+        if(/\b(var|let|const)\s+unite\s*=/.test(src) && !/\b(var|let|const)\s+codeNamesArr\s*=/.test(src)){
+            src = src.replace(/\b(var|let|const)\s+unite\s*=/, function(match, p1) { return p1 + ' codeNamesArr ='; });
+        }
+        if(!/\b(var|let|const)\s+records\s*=/.test(src) && /\b(var|let|const)\s+distance\s*=/.test(src)) { src += '\nvar records = distance;\n'; }
 
-        // التحقق يتم قبل أي إضافة تلقائية لسطر "records"، حتى لا يظهر اسم متغيّر مفقود
-        // بالخطأ داخل نص مُضاف لاحقًا (مثال: "var records = distance;" حين تكون distance
-        // نفسها غير معرَّفة أصلاً في الملف).
-        ['codeNamesArr', 'lieu', 'distance'].forEach(function(name){
-            const declared = new RegExp('\\b(var|let|const)\\s+' + name + '\\s*=');
-            if(!declared.test(src)){
-                throw new Error('الملف لا يحتوي على المتغيّر المطلوب «' + name + '». تأكّد أنه بنفس صيغة data.js الأصلي.');
-            }
-        });
-
-        // إضافة سطر ربط records بـ distance إن كان ناقصًا — بنفس منطق سكربت المزامنة sync_data.py
-        const finalSrc = /\bvar\s+records\s*=/.test(src) ? src : src.replace(/\s*$/, '') + '\n\nvar records = distance;\n';
-
-        const wrapped = finalSrc + '\n;return { codeNamesArr: (typeof codeNamesArr!=="undefined")?codeNamesArr:undefined, ' +
-            'lieu: (typeof lieu!=="undefined")?lieu:undefined, ' +
-            'distance: (typeof distance!=="undefined")?distance:undefined, ' +
-            'produit: (typeof produit!=="undefined")?produit:undefined, ' +
-            'operation: (typeof operation!=="undefined")?operation:undefined };';
+        const wrapped = src + '\n;return { ' +
+            'codeNamesArr: typeof codeNamesArr !== "undefined" ? codeNamesArr : undefined, ' +
+            'lieu: typeof lieu !== "undefined" ? lieu : undefined, ' +
+            'distance: typeof distance !== "undefined" ? distance : undefined, ' +
+            'records: typeof records !== "undefined" ? records : undefined, ' +
+            'produit: typeof produit !== "undefined" ? produit : undefined, ' +
+            'operation: typeof operation !== "undefined" ? operation : undefined };';
 
         let result;
-        try{
-            // الملف يُشغَّل داخل دالة منعزلة (Function) وليس eval المباشر، ودون وصول لأي شيء
-            // خارج نطاقه سوى القيم التي يعيدها صراحةً.
-            const runner = new Function(wrapped);
-            result = runner();
-        }catch(e){
-            throw new Error('تعذّر قراءة محتوى الملف: يبدو أنه لا يحتوي على كود JavaScript صحيح (' + e.message + ').');
-        }
-
-        if(!Array.isArray(result.codeNamesArr) || result.codeNamesArr.length === 0){
-            throw new Error('قائمة المناطق العامة (codeNamesArr) فارغة أو غير صحيحة داخل الملف.');
-        }
-        if(!Array.isArray(result.lieu) || result.lieu.length === 0){
-            throw new Error('قائمة الأماكن التفصيلية (lieu) فارغة أو غير صحيحة داخل الملف.');
-        }
-        if(!Array.isArray(result.distance) || result.distance.length === 0){
-            throw new Error('قائمة مسافات المسارات (distance) فارغة أو غير صحيحة داخل الملف.');
-        }
-
-        return { data: result, raw: finalSrc };
+        try{ const runner = new Function(wrapped); result = runner(); }catch(e){ throw new Error('تعذّر قراءة محتوى الملف (' + e.message + ').'); }
+        if(!Array.isArray(result.codeNamesArr) || result.codeNamesArr.length === 0) throw new Error('قائمة codeNamesArr فارغة.');
+        if(!Array.isArray(result.lieu) || result.lieu.length === 0) throw new Error('قائمة lieu فارغة.');
+        const distArr = result.distance || result.records;
+        if(!Array.isArray(distArr) || distArr.length === 0) throw new Error('قائمة distance فارغة.');
+        result.distance = distArr; result.records = result.records || distArr;
+        return { data: result, raw: src };
     }
 
     function renderPreview(fileName, sizeKb, parsed){
         const d = parsed.data;
-        const rows = [
-            ['اسم الملف', fileName],
-            ['حجم الملف', sizeKb + ' KB'],
-            ['المناطق العامة', d.codeNamesArr.length.toLocaleString('en-US')],
-            ['الأماكن التفصيلية', d.lieu.length.toLocaleString('en-US')],
-            ['مسارات المسافة', d.distance.length.toLocaleString('en-US')],
-        ];
-        if(Array.isArray(d.produit)) rows.push(['المنتجات', d.produit.length.toLocaleString('en-US')]);
-        if(Array.isArray(d.operation)) rows.push(['أنواع العمليات', d.operation.length.toLocaleString('en-US')]);
-
-        uploadPreviewList.innerHTML = rows.map(function(r){
-            return '<li>' + r[0] + ': <b>' + r[1] + '</b></li>';
-        }).join('');
+        const rows = [['اسم الملف', fileName], ['حجم الملف', sizeKb + ' KB'], ['المناطق العامة', d.codeNamesArr.length.toLocaleString('en-US')], ['الأماكن التفصيلية', d.lieu.length.toLocaleString('en-US')], ['مسارات المسافة', d.distance.length.toLocaleString('en-US')]];
+        uploadPreviewList.innerHTML = rows.map(function(r){ return '<li>' + r[0] + ': <b>' + r[1] + '</b></li>'; }).join('');
         uploadPreview.style.display = 'block';
     }
 
     function handleFile(file){
-        if(!(window.__isAdmin && window.__isAdmin())){
-            setUploadStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.');
-            return;
-        }
+        if(!(window.__isAdmin && window.__isAdmin())){ setUploadStatus('error', 'هذه الميزة مخصّصة للمستخدم الرئيسي فقط.'); return; }
         resetUploadFlow(false);
-
-        if(!/\.(js|txt)$/i.test(file.name)){
-            setUploadStatus('error', 'صيغة الملف غير مدعومة. الرجاء رفع ملف بامتداد .js (نفس صيغة data.js).');
-            return;
-        }
-        if(file.size > MAX_FILE_SIZE){
-            setUploadStatus('error', 'حجم الملف كبير جدًا (الحد الأقصى 15 MB).');
-            return;
-        }
-
-        dropzone.classList.add('has-file');
-        dropzoneFilename.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        if(!/\.(js|txt)$/i.test(file.name)){ setUploadStatus('error', 'صيغة الملف غير مدعومة.'); return; }
+        if(file.size > MAX_FILE_SIZE){ setUploadStatus('error', 'حجم الملف كبير جدًا (الحد الأقصى 15 MB).'); return; }
+        dropzone.classList.add('has-file'); dropzoneFilename.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
         setUploadStatus('warn', '<span class="spinner-inline"></span> جارٍ التحقق من الملف...');
-
         const reader = new FileReader();
-        reader.onerror = function(){
-            setUploadStatus('error', 'تعذّرت قراءة الملف من الجهاز. حاول مرة أخرى.');
-        };
+        reader.onerror = function(){ setUploadStatus('error', 'تعذّرت قراءة الملف من الجهاز.'); };
         reader.onload = function(){
             try{
                 const parsed = parseDataFile(String(reader.result));
                 pendingUpload = { data: parsed.data, raw: parsed.raw, fileName: file.name };
-                setUploadStatus('ok', 'الملف صالح. راجع الملخّص أدناه ثم اضغط "تأكيد واستبدال البيانات".');
+                setUploadStatus('ok', 'الملف صالح. راجع الملخّص أدناه ثم اضغط "تأكيد".');
                 renderPreview(file.name, (file.size / 1024).toFixed(1), parsed);
-            }catch(err){
-                pendingUpload = null;
-                setUploadStatus('error', err.message);
-            }
+            }catch(err){ pendingUpload = null; setUploadStatus('error', err.message); }
         };
         reader.readAsText(file, 'utf-8');
     }
 
-    dropzoneLink.addEventListener('click', function(e){
-        e.stopPropagation();
-        dataFileInput.click();
-    });
+    dropzoneLink.addEventListener('click', function(e){ e.stopPropagation(); dataFileInput.click(); });
     dropzone.addEventListener('click', function(){ dataFileInput.click(); });
-    dropzone.addEventListener('keydown', function(e){
-        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); dataFileInput.click(); }
-    });
-    dataFileInput.addEventListener('change', function(){
-        if(dataFileInput.files && dataFileInput.files[0]) handleFile(dataFileInput.files[0]);
-    });
+    dropzone.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); dataFileInput.click(); } });
+    dataFileInput.addEventListener('change', function(){ if(dataFileInput.files && dataFileInput.files[0]) handleFile(dataFileInput.files[0]); });
+    ['dragenter', 'dragover'].forEach(function(evt){ dropzone.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); dropzone.classList.add('dragover'); }); });
+    ['dragleave', 'dragend'].forEach(function(evt){ dropzone.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover'); }); });
+    dropzone.addEventListener('drop', function(e){ e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover'); if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    btnCancelUpload.addEventListener('click', function(){ resetUploadFlow(false); });
 
-    ['dragenter', 'dragover'].forEach(function(evt){
-        dropzone.addEventListener(evt, function(e){
-            e.preventDefault(); e.stopPropagation();
-            dropzone.classList.add('dragover');
-        });
-    });
-    ['dragleave', 'dragend'].forEach(function(evt){
-        dropzone.addEventListener(evt, function(e){
-            e.preventDefault(); e.stopPropagation();
-            dropzone.classList.remove('dragover');
-        });
-    });
-    dropzone.addEventListener('drop', function(e){
-        e.preventDefault(); e.stopPropagation();
-        dropzone.classList.remove('dragover');
-        if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-    });
+    // دالة الحفظ في GitHub
+    async function saveToGitHub(content, filename) {
+        const cfg = getGhConfig();
+        if(!cfg.token || !cfg.owner || !cfg.repo) { throw new Error('لم يتم إعداد GitHub Token. اضغط زر «إعدادات GitHub» بالأعلى وأدخل Token أولاً.'); }
 
-    btnCancelUpload.addEventListener('click', function(){
-        resetUploadFlow(false);
-    });
+        const path = String(cfg.path || filename).replace(/^\/+/, '');
+        const o = encodeURIComponent(cfg.owner), r = encodeURIComponent(cfg.repo);
+        const apiUrl = 'https://api.github.com/repos/' + o + '/' + r + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
+        const headers = ghHeaders(cfg.token);
 
-    btnConfirmUpload.addEventListener('click', function(){
-        if(!pendingUpload){ return; }
-        const confirmed = window.confirm(
-            'سيتم استبدال بيانات المسافات والأماكن الحالية بالكامل بمحتوى الملف المرفوع "' +
-            pendingUpload.fileName + '". هذا الإجراء لا يمكن التراجع عنه في هذه الجلسة. هل تريد المتابعة؟'
-        );
-        if(!confirmed) return;
+        // 0. التحقق من Token/المستودع ومعرفة الفرع الافتراضي (main أو master)
+        const info = await ghCheckAccess(cfg);
+        const branch = info.default_branch || 'main';
+
+        // 1. جلب SHA للملف الحالي عبر قائمة المجلد (يعمل حتى لو تجاوز الملف 1MB)، دون استعمال الكاش
+        async function getSha(){
+            const parts = path.split('/'); const fileName = parts.pop();
+            const dirUrl = 'https://api.github.com/repos/' + o + '/' + r + '/contents' + (parts.length ? '/' + parts.map(encodeURIComponent).join('/') : '') + '?ref=' + encodeURIComponent(branch) + '&_=' + Date.now();
+            const res = await ghFetch(dirUrl, { headers: headers, cache: 'no-store' });
+            if(res.status === 404) return undefined;
+            if(!res.ok) throw new Error(ghErrorText(res.status, await ghApiMessage(res)));
+            const list = await res.json();
+            const f = Array.isArray(list) ? list.find(function(x){ return x.name === fileName && x.type === 'file'; }) : null;
+            return f ? f.sha : undefined;
+        }
+        let sha = await getSha();
+
+        // 2. رفع الملف الجديد (مع إعادة محاولة واحدة عند التعارض)
+        const b64 = btoa(unescape(encodeURIComponent(content))); // Base64 UTF-8
+        for(let attempt = 0; attempt < 2; attempt++){
+            const putRes = await ghFetch(apiUrl, {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+                body: JSON.stringify({ message: 'تحديث data.js عبر لوحة التحكم', content: b64, sha: sha || undefined, branch: branch })
+            });
+            if(putRes.ok){
+                const j = await putRes.json();
+                return { commitSha: j.commit && j.commit.sha, commitUrl: j.commit && j.commit.html_url, branch: branch };
+            }
+            const msg = await ghApiMessage(putRes);
+            if((putRes.status === 409 || putRes.status === 422) && attempt === 0){ sha = await getSha(); continue; }
+            throw new Error(ghErrorText(putRes.status, msg));
+        }
+    }
+
+    btnConfirmUpload.addEventListener('click', async function(){
+        if(!pendingUpload) return;
+        if(!window.confirm('سيتم استبدال بيانات المسافات والأماكن الحالية بالكامل. هل تريد المتابعة؟')) return;
+        
+        setUploadStatus('warn', '<span class="spinner-inline"></span> جارٍ الحفظ في قاعدة البيانات (GitHub)...');
+        btnConfirmUpload.disabled = true;
 
         try{
+            // تحديث الذاكرة المحلية أولاً
             applyUploadedData(pendingUpload.data);
-            setUploadStatus('ok', 'تم تحديث البيانات في هذه الصفحة بنجاح (' + records.length + ' مسار، ' +
-                Object.keys(codeNames).length + ' موقع). لتحديث الموقع بشكل دائم للجميع نزّل الملف أدناه وارفعه على GitHub.');
+            
+            // محاولة الحفظ في GitHub
+            const res = await saveToGitHub(pendingUpload.raw, 'data.js');
+            setUploadStatus('ok', '✅ تم حفظ قاعدة البيانات في GitHub بنجاح' + (res && res.commitSha ? ' (commit ' + res.commitSha.slice(0,7) + ')' : '') + '. ستظهر لجميع الأجهزة بعد دقيقة إلى دقيقتين (ريثما ينشر GitHub Pages الموقع). إن لم تظهر، أغلق الصفحة وأعد فتحها.');
+            uploadPreview.style.display = 'none';
+        } catch(err) {
+            // إذا فشل GitHub، نبقى في نفس الصفحة ونظهر الخطأ
+            setUploadStatus('error', '⚠️ لم يُحفظ التحديث في GitHub، لذلك سيختفي عند إعادة تحميل الصفحة: <br>' + err.message + '<br><br>يمكنك تنزيل الملف بالأسفل ورفعه يدوياً.');
             uploadPreview.style.display = 'none';
             uploadDownloadRow.style.display = 'block';
-        }catch(err){
-            setUploadStatus('error', 'حدث خطأ أثناء تطبيق البيانات: ' + err.message);
+        } finally {
+            btnConfirmUpload.disabled = false;
         }
     });
 
@@ -1188,81 +947,58 @@ renderList();
         if(!pendingUpload) return;
         const blob = new Blob([pendingUpload.raw], { type: 'text/javascript;charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'data.js';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const a = document.createElement('a'); a.href = url; a.download = 'data.js';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
     });
 
-    // يستبدل محتوى المصفوفات الحيّة في الصفحة (مع الحفاظ على نفس المراجع، بما أن records === distance)
     function applyUploadedData(newData){
-        codeNamesArr.length = 0;
-        Array.prototype.push.apply(codeNamesArr, newData.codeNamesArr);
-
-        lieu.length = 0;
-        Array.prototype.push.apply(lieu, newData.lieu);
-
-        distance.length = 0;
-        Array.prototype.push.apply(distance, newData.distance);
-        // records يشير لنفس مصفوفة distance، فيُحدَّث تلقائيًا معها
-
-        if(Array.isArray(newData.produit) && typeof produit !== 'undefined'){
-            produit.length = 0;
-            Array.prototype.push.apply(produit, newData.produit);
-        }
-        if(Array.isArray(newData.operation) && typeof operation !== 'undefined'){
-            operation.length = 0;
-            Array.prototype.push.apply(operation, newData.operation);
-        }
-
-        // إعادة بناء الحالة المشتقة: قاموس الأسماء، القائمة المنسدلة، خريطة المسافات، وقائمة الأماكن
+        customPlaces = {}; try { localStorage.removeItem(CUSTOM_PLACES_KEY); } catch(e){}
+        codeNamesArr.length = 0; Array.prototype.push.apply(codeNamesArr, newData.codeNamesArr);
+        lieu.length = 0; Array.prototype.push.apply(lieu, newData.lieu);
+        if (typeof distance !== 'undefined') { distance.length = 0; Array.prototype.push.apply(distance, newData.distance); }
+        if (typeof records !== 'undefined') { records.length = 0; Array.prototype.push.apply(records, newData.records); }
+        if(Array.isArray(newData.produit) && typeof produit !== 'undefined'){ produit.length = 0; Array.prototype.push.apply(produit, newData.produit); }
+        if(Array.isArray(newData.operation) && typeof operation !== 'undefined'){ operation.length = 0; Array.prototype.push.apply(operation, newData.operation); }
+        
         Object.keys(codeNames).forEach(function(k){ delete codeNames[k]; });
         lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; });
         codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
-        Object.keys(customPlaces).forEach(function(code){ codeNames[code] = customPlaces[code]; });
-
         Object.keys(distanceMap).forEach(function(k){ delete distanceMap[k]; });
         records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
-
-        let dlHtml = '';
-        Object.keys(codeNames).forEach(function(code){
-            dlHtml += "<option value='" + code + "'>" + code + " - " + codeNames[code] + "</option>";
-        });
-        datalist.innerHTML = dlHtml;
-
+        
+        rebuildDatalist();
         places.length = 0;
-        Array.prototype.push.apply(places, Object.keys(codeNames)
-            .map(function(code){ return [code, codeNames[code]]; })
-            .sort(function(x, y){ return x[0].localeCompare(y[0]); }));
-
-        document.getElementById('statsLine').textContent =
-            'قاعدة البيانات: ' + records.length + ' مسار بين ' + Object.keys(codeNames).length + ' موقع';
-
+        Array.prototype.push.apply(places, Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }));
         applyFilter(listSearch.value);
     }
 })();
 </script>
-   <script>
-    // تعطيل النقر بزر الماوس الأيمن
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
-
-    // تعطيل التحديد
-    document.onselectstart = function () {
-        return false;
-    };
-
-    // تعطيل اختصارات لوحة المفاتيح مثل Ctrl+C
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
-            e.preventDefault();
-        }
-    });
-
+<script>
+// تعطيل النقر بزر الماوس الأيمن / التحديد / Ctrl+C
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.onselectstart = function(){ return false; };
+document.addEventListener('keydown', function(e){ if(e.ctrlKey && (e.key === 'c' || e.key === 'C')) e.preventDefault(); });
+</script>
+<script>
+// القائمة الجانبية
+(function(){
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const btnMenu = document.getElementById('btnMenu');
+    const title = document.getElementById('topbarTitle');
+    if(!sidebar || !overlay || !btnMenu) return;
+    function openMenu(){ sidebar.classList.add('open'); overlay.classList.add('show'); document.body.classList.add('no-scroll'); btnMenu.setAttribute('aria-expanded', 'true'); }
+    function closeMenu(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.classList.remove('no-scroll'); btnMenu.setAttribute('aria-expanded', 'false'); }
+    btnMenu.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeMenu() : openMenu(); });
+    overlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeMenu(); });
+    window.addEventListener('resize', function(){ if(window.innerWidth > 900) closeMenu(); });
+    const navButtons = document.querySelectorAll('.tab-btn');
+    function syncTitle(){ const active = document.querySelector('.tab-btn.active .nav-label'); if(active && title) title.textContent = active.textContent; }
+    navButtons.forEach(function(b){ b.addEventListener('click', function(){ closeMenu(); window.scrollTo({ top: 0, behavior: 'smooth' }); }); new MutationObserver(syncTitle).observe(b, { attributes: true, attributeFilter: ['class'] }); });
+    syncTitle();
+})();
 </script>
 </body>
 </html>
