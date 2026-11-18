@@ -149,19 +149,10 @@ input:disabled{opacity:.55;}
 .place-card .place-code{font-size:13px;font-weight:800;color:var(--amber);direction:ltr;letter-spacing:1px;display:inline-flex;align-items:center;gap:6px;}
 .place-card .place-code::before{content:"#";opacity:.6;}
 .place-card .place-name{font-size:16px;color:#fff;font-weight:700;line-height:1.4;word-break:break-word;min-height:22px;}
+.place-card .place-org{font-size:13px;font-weight:700;color:var(--cyan);direction:ltr;text-align:left;display:inline-flex;align-items:center;gap:6px;opacity:.95;}
+.place-card .place-org::before{content:"\1F3E2";font-size:12px;}
 .place-card .edit-btn{align-self:flex-start;margin-top:6px;font-size:12px;padding:6px 14px;border-radius:999px;background:var(--grad-warm);color:#fff;border:none;cursor:pointer;font-weight:700;transition:transform .15s,box-shadow .2s;}
 .place-card .edit-btn:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(255,61,154,.4);}
-.place-card .place-org{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#fff;background:rgba(124,77,255,.28);border:1px solid rgba(124,77,255,.55);padding:3px 10px;border-radius:999px;line-height:1.5;}
-.place-card .place-org .org-lbl{opacity:.75;font-weight:600;}
-.place-card .place-org.none{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:var(--muted);}
-select{
-    width:100%;padding:14px 14px;font:inherit;font-size:16px;color:#fff;
-    background:rgba(8,6,32,.6);border:2px solid rgba(255,255,255,.18);
-    border-radius:14px;outline:none;transition:.2s;cursor:pointer;
-}
-select:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(0,229,255,.22);}
-select option{background:#151130;color:#fff;}
-.list-toolbar select{width:auto;min-width:170px;}
 .empty-msg{grid-column:1/-1;text-align:center;padding:44px 16px;color:var(--muted);font-size:15px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.15);border-radius:16px;}
 
 .footer-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;}
@@ -401,8 +392,7 @@ input[type="text"], input[type="search"], input[type="password"]{ color:#fff !im
             <div class="stat-card cool"><div class="stat-num" id="statShown">0</div><div class="stat-lbl">👁️ المعروضة الآن</div></div>
         </div>
         <div class="list-toolbar">
-            <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم أو Organisme...">
-            <select id="orgFilter" aria-label="Organisme"><option value="">Organisme (CCLS): الكل</option></select>
+            <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم أو الجهة...">
             <button class="btn" id="btnClearSearch">مسح</button>
             <button class="btn" id="btnToggleShowAll">عرض الكل</button>
         </div>
@@ -421,7 +411,6 @@ input[type="text"], input[type="search"], input[type="password"]{ color:#fff !im
                 <div class="form-grid">
                     <div class="field"><label for="newCode">Code (رقم المكان)</label><input type="text" id="newCode" name="newCode" autocomplete="off" placeholder="مثال: 101099"></div>
                     <div class="field"><label for="newName">اسم المكان</label><input type="text" id="newName" name="newName" autocomplete="off" placeholder="اسم المكان"></div>
-                    <div class="field"><label for="newOrganisme">Organisme</label><select id="newOrganisme" name="newOrganisme"></select></div>
                 </div>
                 <div class="add-place-actions">
                     <button type="button" class="btn" id="btnCancelEdit" style="display:none;">إلغاء التعديل</button>
@@ -660,10 +649,6 @@ tabButtons.forEach(function(btn){ btn.addEventListener('click', function(){ swit
 
 // تجهيز البيانات
 const codeNames = {};
-// Organisme = الـ CCLS التابع له المكان: كل مكان كوده يبدأ بنفس أول 3 أرقام من كود الـ CCLS (مثال: 306015 ← 306000 "CCLS OUM EL BOUAGHI")
-const organismeById = {};
-function orgLabel(id){ id = String(id == null ? '' : id).trim(); return id ? (codeNames[id] || id) : ''; }
-
 if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; }); }
 codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
 
@@ -672,18 +657,6 @@ function loadCustomPlaces(){ try{ const raw = localStorage.getItem(CUSTOM_PLACES
 function saveCustomPlaces(obj){ try{ localStorage.setItem(CUSTOM_PLACES_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
 let customPlaces = loadCustomPlaces();
 Object.keys(customPlaces).forEach(function(code){ codeNames[code] = customPlaces[code]; });
-const CUSTOM_ORG_KEY = 'customOrganismes_v1';
-function loadCustomOrg(){ try{ const raw = localStorage.getItem(CUSTOM_ORG_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
-function saveCustomOrg(obj){ try{ localStorage.setItem(CUSTOM_ORG_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
-let customOrg = loadCustomOrg();
-function cclsCodes(){ return Object.keys(codeNames).filter(function(c){ return /^\d{3}000$/.test(c) && /^CCLS\b/i.test(codeNames[c]); }); }
-function recomputeOrg(){
-    Object.keys(organismeById).forEach(function(k){ delete organismeById[k]; });
-    const set = {}; cclsCodes().forEach(function(c){ set[c] = 1; });
-    Object.keys(codeNames).forEach(function(code){ if(/^\d{6}$/.test(code)){ const pref = code.slice(0, 3) + '000'; if(set[pref]) organismeById[code] = pref; } });
-    Object.keys(customOrg).forEach(function(code){ if(customOrg[code]) organismeById[code] = customOrg[code]; });
-}
-recomputeOrg();
 
 const distanceMap = {};
 records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
@@ -736,31 +709,85 @@ const statPlaces = document.getElementById('statPlaces');
 const statRoutes = document.getElementById('statRoutes');
 const statShown = document.getElementById('statShown');
 
-function buildPlaces(){ return Object.keys(codeNames).map(function(code){ return [code, codeNames[code], organismeById[code] || '']; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }); }
-const places = buildPlaces();
-const orgFilter = document.getElementById('orgFilter');
-function orgOptionIds(){ return cclsCodes().sort(function(a, b){ return codeNames[a].localeCompare(codeNames[b]); }); }
-function fillOrgSelects(){
-    const cur = orgFilter.value; let f = '<option value="">Organisme (CCLS): الكل</option>';
-    orgOptionIds().forEach(function(id){ f += '<option value="' + escapeHtml(id) + '">' + escapeHtml(orgLabel(id)) + '</option>'; });
-    orgFilter.innerHTML = f; orgFilter.value = cur;
-    const sel = document.getElementById('newOrganisme'); const curN = sel.value; let h = '<option value="">— بدون —</option>';
-    orgOptionIds().forEach(function(id){ h += '<option value="' + escapeHtml(id) + '">' + escapeHtml(orgLabel(id)) + '</option>'; });
-    sel.innerHTML = h; sel.value = curN;
-}
+// جدول organisem: أول 3 أرقام من كود المكان = كود الجهة (ملف organisem.txt)
+const organisemMap = {
+    "101":"UCC ALGER",
+    "102":"CCLS BLIDA",
+    "103":"CCLS BERROUAGHIA",
+    "104":"CCLS BOUIRA",
+    "105":"O.A.I.C",
+    "106":"CCLS EL-KHEMIS",
+    "107":"CCLS M'SILA",
+    "108":"CCLS DJELFA",
+    "109":"CCLS LAGHOUAT",
+    "110":"CCLS TIZI OUZOU",
+    "111":"CCLS ADRAR",
+    "112":"CCLS EL MENEA",
+    "201":"CCLS ORAN",
+    "202":"UCC ORAN",
+    "203":"UCA MOSTAGANEM",
+    "204":"CCLS RELIZANE",
+    "205":"CCLS O. R'HIOU",
+    "206":"CCLS A. TEMOUCHENT",
+    "207":"CCLS H-B. HADJAR",
+    "208":"CCLS S. B. ABBES",
+    "209":"CCLS LAMTAR",
+    "210":"CCLS TELAGH",
+    "211":"CCLS SFISEF",
+    "212":"CCLS TLEMCEN",
+    "213":"CCLS SAIDA",
+    "214":"CCLS MASCARA",
+    "215":"CCLS TIARET",
+    "216":"CCLS FRENDA",
+    "217":"CCLS MAHDIA",
+    "218":"CCLS BECHAR",
+    "219":"UCA ORAN",
+    "220":"CCLS TISSEMSILT",
+    "221":"CCLS NAAMA",
+    "222":"CCLS EL BAYADH",
+    "301":"CCLS CONSTANTINE",
+    "302":"CCLS ANNABA",
+    "303":"CCLS BATNA",
+    "304":"UCA SKIKDA",
+    "305":"CCLS SKIKDA",
+    "306":"CCLS O.EL-BOUAGHI",
+    "307":"CCLS AIN M'LILA",
+    "308":"CCLS GUELMA",
+    "309":"CCLS SOUK AHRAS",
+    "310":"CCLS SETIF",
+    "311":"CCLS B. B. ARRERIDJ",
+    "312":"CCLS TEBESSA",
+    "313":"CCLS OUARGLA",
+    "314":"CCLS BISKRA",
+    "315":"CCLS MILA",
+    "316":"CCLS KHENCHELA",
+    "317":"UCA BEJAIA",
+    "318":"URCA JIJEL",
+    "319":"AUTRE CLIENTS",
+    "321":"CCLS OUED SOUF",
+    "401":"UNITE DE ROUIBA",
+    "402":"CAP CCLS TIMIMOUNE",
+    "403":"UNITE DE BLIDA",
+    "404":"UNITE DE BOUIRA",
+    "405":"UNITE DE DJELFA",
+    "406":"UNITE D'EL KHEMIS",
+    "407":"UNITE DE LAGHOUAT",
+    "408":"UNITE DE M'SILA",
+    "409":"UNITE DE TENES",
+    "410":"UNITE DE TIZI-OUZOU"
+};
+function getOrganisem(code){ code = String(code || ''); if(code.length <= 3) return ''; return organisemMap[code.substring(0, 3)] || ''; }
+
+const places = Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); });
 const PAGE_SIZE = 60; let filteredPlaces = places; let currentPage = 1; let showAll = false;
 
 function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 function updateStats(){ statPlaces.textContent = Object.keys(codeNames).length.toLocaleString('en-US'); statRoutes.textContent = records.length.toLocaleString('en-US'); statShown.textContent = filteredPlaces.length.toLocaleString('en-US'); }
 
 function applyFilter(query){
-    query = (query || '').trim().toLowerCase(); const orgSel = orgFilter.value;
-    filteredPlaces = places.filter(function(p){
-        if(orgSel && p[2] !== orgSel) return false;
-        if(!query) return true;
-        const code = p[0], name = (p[1] || '').toLowerCase(), org = (p[2] ? orgLabel(p[2]) : '').toLowerCase();
-        return code.toLowerCase().includes(query) || name.includes(query) || org.includes(query);
-    });
+    query = (query || '').trim().toLowerCase();
+    if(!query){ filteredPlaces = places; }
+    else { filteredPlaces = places.filter(function(p){ const code = p[0], name = (p[1] || '').toLowerCase(); return code.toLowerCase().includes(query) || name.includes(query) || getOrganisem(code).toLowerCase().includes(query); }); }
     currentPage = 1; renderList();
 }
 
@@ -776,10 +803,11 @@ function renderList(){
     else {
         let html = '';
         pageItems.forEach(function(p){
-            const code = p[0], name = p[1], org = p[2] || '';
-            const orgHtml = org ? "<div class='place-org'><span class='org-lbl'>Organisme</span> " + escapeHtml(orgLabel(org)) + "</div>" : "<div class='place-org none'><span class='org-lbl'>Organisme</span> —</div>";
+            const code = p[0], name = p[1];
             const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
             const editBtn = userIsAdmin ? "<button type='button' class='edit-btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>✎ تعديل</button>" : '';
+            const orgName = getOrganisem(code);
+            const orgHtml = orgName ? "<div class='place-org'>" + escapeHtml(orgName) + "</div>" : '';
             html += "<div class='place-card'><div class='place-code'>" + escapeHtml(code) + "</div><div class='place-name'>" + escapeHtml(name || '—') + "</div>" + orgHtml + editBtn + "</div>";
         });
         listBody.innerHTML = html;
@@ -799,8 +827,7 @@ function renderPagination(current, totalPages){
 }
 function goToPage(p){ currentPage = p; renderList(); }
 listSearch.addEventListener('input', function(){ applyFilter(listSearch.value); });
-orgFilter.addEventListener('change', function(){ applyFilter(listSearch.value); });
-btnClearSearch.addEventListener('click', function(){ listSearch.value = ''; orgFilter.value = ''; applyFilter(''); });
+btnClearSearch.addEventListener('click', function(){ listSearch.value = ''; applyFilter(''); });
 btnToggleShowAll.addEventListener('click', function(){ showAll = !showAll; this.textContent = showAll ? 'عرض بالصفحات' : 'عرض الكل'; this.classList.toggle('active', showAll); currentPage = 1; renderList(); });
 
 // إضافة / تعديل
@@ -809,13 +836,12 @@ const addPlaceStatus = document.getElementById('addPlaceStatus');
 const addPlaceTitle = document.getElementById('addPlaceTitle');
 const newCodeInput = document.getElementById('newCode');
 const newNameInput = document.getElementById('newName');
-const newOrgInput = document.getElementById('newOrganisme');
 const btnSubmitPlace = document.getElementById('btnSubmitPlace');
 const btnCancelEdit = document.getElementById('btnCancelEdit');
 let editingCode = null;
 
 function setAddPlaceStatus(type, msg){ if(!type){ addPlaceStatus.style.display = 'none'; return; } addPlaceStatus.className = 'status ' + type; addPlaceStatus.textContent = msg; }
-function enterEditMode(code){ editingCode = code; newCodeInput.value = code; newCodeInput.disabled = true; newNameInput.value = codeNames[code] || ''; newOrgInput.value = organismeById[code] || ''; addPlaceTitle.textContent = 'تعديل المكان: ' + code; btnSubmitPlace.textContent = 'حفظ التعديل'; btnCancelEdit.style.display = ''; setAddPlaceStatus(null); switchTab('tab-add'); newNameInput.focus(); }
+function enterEditMode(code){ editingCode = code; newCodeInput.value = code; newCodeInput.disabled = true; newNameInput.value = codeNames[code] || ''; addPlaceTitle.textContent = 'تعديل المكان: ' + code; btnSubmitPlace.textContent = 'حفظ التعديل'; btnCancelEdit.style.display = ''; setAddPlaceStatus(null); switchTab('tab-add'); newNameInput.focus(); }
 function exitEditMode(){ editingCode = null; newCodeInput.disabled = false; addPlaceTitle.textContent = 'إضافة مكان جديد'; btnSubmitPlace.textContent = 'إضافة المكان'; btnCancelEdit.style.display = 'none'; addPlaceForm.reset(); switchTab('tab-list'); }
 function startEditPlace(code){ if(!(window.__isAdmin && window.__isAdmin())) return; if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return; enterEditMode(code); }
 btnCancelEdit.addEventListener('click', function(){ exitEditMode(); setAddPlaceStatus(null); });
@@ -826,19 +852,17 @@ addPlaceForm.addEventListener('submit', function(e){
     const code = editingCode ? editingCode : newCodeInput.value.trim(); const name = newNameInput.value.trim();
     if(!code || !name){ setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.'); return; }
     const isUpdate = editingCode !== null || Object.prototype.hasOwnProperty.call(codeNames, code);
-    let orgVal = newOrgInput.value; if(!orgVal){ const pref = code.slice(0, 3) + '000'; if(/^\d{6}$/.test(code) && Object.prototype.hasOwnProperty.call(codeNames, pref) && /^CCLS\b/i.test(codeNames[pref])) orgVal = pref; } organismeById[code] = orgVal;
-    codeNames[code] = name; customPlaces[code] = name; customOrg[code] = orgVal; const saved = saveCustomPlaces(customPlaces) && saveCustomOrg(customOrg);
+    codeNames[code] = name; customPlaces[code] = name; const saved = saveCustomPlaces(customPlaces);
     const escapedCode = code.replace(/'/g, "\\'");
     let existingOpt = datalist.querySelector("option[value='" + escapedCode + "']");
     if(!existingOpt){ const opt = document.createElement('option'); opt.value = code; opt.textContent = code + ' - ' + name; datalist.appendChild(opt); } else { existingOpt.textContent = code + ' - ' + name; }
     const idx = places.findIndex(function(p){ return p[0] === code; });
-    if(idx >= 0){ places[idx][1] = name; places[idx][2] = orgVal; } else { places.push([code, name, orgVal]); }
+    if(idx >= 0){ places[idx][1] = name; } else { places.push([code, name]); }
     places.sort(function(x, y){ return x[0].localeCompare(y[0]); });
     applyFilter(listSearch.value); const wasEditing = editingCode !== null;
     if(!saved) setAddPlaceStatus('warn', 'تم الحفظ محلياً فقط.'); else if(wasEditing || isUpdate) setAddPlaceStatus('ok', 'تم تحديث اسم المكان بنجاح.'); else setAddPlaceStatus('ok', 'تمت إضافة المكان بنجاح.');
     if(wasEditing) exitEditMode(); else addPlaceForm.reset();
 });
-fillOrgSelects();
 renderList();
 
 // رفع الملف + GitHub API
@@ -1003,7 +1027,6 @@ renderList();
 
     function applyUploadedData(newData){
         customPlaces = {}; try { localStorage.removeItem(CUSTOM_PLACES_KEY); } catch(e){}
-        customOrg = {}; try { localStorage.removeItem(CUSTOM_ORG_KEY); } catch(e){}
         codeNamesArr.length = 0; Array.prototype.push.apply(codeNamesArr, newData.codeNamesArr);
         lieu.length = 0; Array.prototype.push.apply(lieu, newData.lieu);
         if (typeof distance !== 'undefined') { distance.length = 0; Array.prototype.push.apply(distance, newData.distance); }
@@ -1014,14 +1037,12 @@ renderList();
         Object.keys(codeNames).forEach(function(k){ delete codeNames[k]; });
         lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; });
         codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
-        recomputeOrg();
         Object.keys(distanceMap).forEach(function(k){ delete distanceMap[k]; });
         records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
         
         rebuildDatalist();
         places.length = 0;
-        Array.prototype.push.apply(places, buildPlaces());
-        fillOrgSelects();
+        Array.prototype.push.apply(places, Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }));
         applyFilter(listSearch.value);
     }
 })();
