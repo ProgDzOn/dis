@@ -151,6 +151,17 @@ input:disabled{opacity:.55;}
 .place-card .place-name{font-size:16px;color:#fff;font-weight:700;line-height:1.4;word-break:break-word;min-height:22px;}
 .place-card .edit-btn{align-self:flex-start;margin-top:6px;font-size:12px;padding:6px 14px;border-radius:999px;background:var(--grad-warm);color:#fff;border:none;cursor:pointer;font-weight:700;transition:transform .15s,box-shadow .2s;}
 .place-card .edit-btn:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(255,61,154,.4);}
+.place-card .place-org{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#fff;background:rgba(124,77,255,.28);border:1px solid rgba(124,77,255,.55);padding:3px 10px;border-radius:999px;line-height:1.5;}
+.place-card .place-org .org-lbl{opacity:.75;font-weight:600;}
+.place-card .place-org.none{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:var(--muted);}
+select{
+    width:100%;padding:14px 14px;font:inherit;font-size:16px;color:#fff;
+    background:rgba(8,6,32,.6);border:2px solid rgba(255,255,255,.18);
+    border-radius:14px;outline:none;transition:.2s;cursor:pointer;
+}
+select:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(0,229,255,.22);}
+select option{background:#151130;color:#fff;}
+.list-toolbar select{width:auto;min-width:170px;}
 .empty-msg{grid-column:1/-1;text-align:center;padding:44px 16px;color:var(--muted);font-size:15px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.15);border-radius:16px;}
 
 .footer-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;}
@@ -390,7 +401,8 @@ input[type="text"], input[type="search"], input[type="password"]{ color:#fff !im
             <div class="stat-card cool"><div class="stat-num" id="statShown">0</div><div class="stat-lbl">👁️ المعروضة الآن</div></div>
         </div>
         <div class="list-toolbar">
-            <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم...">
+            <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم أو Organisme...">
+            <select id="orgFilter" aria-label="Organisme"><option value="">Organisme: الكل</option></select>
             <button class="btn" id="btnClearSearch">مسح</button>
             <button class="btn" id="btnToggleShowAll">عرض الكل</button>
         </div>
@@ -409,6 +421,7 @@ input[type="text"], input[type="search"], input[type="password"]{ color:#fff !im
                 <div class="form-grid">
                     <div class="field"><label for="newCode">Code (رقم المكان)</label><input type="text" id="newCode" name="newCode" autocomplete="off" placeholder="مثال: 101099"></div>
                     <div class="field"><label for="newName">اسم المكان</label><input type="text" id="newName" name="newName" autocomplete="off" placeholder="اسم المكان"></div>
+                    <div class="field"><label for="newOrganisme">Organisme</label><select id="newOrganisme" name="newOrganisme"></select></div>
                 </div>
                 <div class="add-place-actions">
                     <button type="button" class="btn" id="btnCancelEdit" style="display:none;">إلغاء التعديل</button>
@@ -647,7 +660,14 @@ tabButtons.forEach(function(btn){ btn.addEventListener('click', function(){ swit
 
 // تجهيز البيانات
 const codeNames = {};
-if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; }); }
+// Organisme: الخانة الثالثة في lieu هي رقم الـ Organisme. التسميات أدناه استنتجتها من أسماء الأماكن — عدّلها حسب جدول organisme الفعلي عندكم.
+const ORGANISME_LABELS = {
+    '1':'Dock / Silo', '2':'Magasin / Station', '3':'Gare', '4':'Moulin', '5':'ERIAD',
+    '6':'Producteur', '7':'Port', '8':'Décharge', '9':'Client divers', '10':'Parc', '11':'Autre'
+};
+function orgLabel(id){ id = String(id == null ? '' : id).trim(); if(!id) return ''; return ORGANISME_LABELS[id] ? ORGANISME_LABELS[id] : ('Organisme ' + id); }
+const organismeById = {};
+if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]){ codeNames[item[0]] = item[1]; organismeById[item[0]] = String(item[2] == null ? '' : item[2]).trim(); } }); }
 codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
 
 const CUSTOM_PLACES_KEY = 'customPlaces_v1';
@@ -655,6 +675,11 @@ function loadCustomPlaces(){ try{ const raw = localStorage.getItem(CUSTOM_PLACES
 function saveCustomPlaces(obj){ try{ localStorage.setItem(CUSTOM_PLACES_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
 let customPlaces = loadCustomPlaces();
 Object.keys(customPlaces).forEach(function(code){ codeNames[code] = customPlaces[code]; });
+const CUSTOM_ORG_KEY = 'customOrganismes_v1';
+function loadCustomOrg(){ try{ const raw = localStorage.getItem(CUSTOM_ORG_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
+function saveCustomOrg(obj){ try{ localStorage.setItem(CUSTOM_ORG_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
+let customOrg = loadCustomOrg();
+Object.keys(customOrg).forEach(function(code){ organismeById[code] = customOrg[code]; });
 
 const distanceMap = {};
 records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
@@ -707,16 +732,31 @@ const statPlaces = document.getElementById('statPlaces');
 const statRoutes = document.getElementById('statRoutes');
 const statShown = document.getElementById('statShown');
 
-const places = Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); });
+function buildPlaces(){ return Object.keys(codeNames).map(function(code){ return [code, codeNames[code], organismeById[code] || '']; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }); }
+const places = buildPlaces();
+const orgFilter = document.getElementById('orgFilter');
+function orgOptionIds(){ const ids = {}; Object.keys(ORGANISME_LABELS).forEach(function(k){ ids[k] = 1; }); Object.keys(organismeById).forEach(function(c){ if(organismeById[c]) ids[organismeById[c]] = 1; }); return Object.keys(ids).sort(function(a, b){ return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0); }); }
+function fillOrgSelects(){
+    const cur = orgFilter.value; let f = '<option value="">Organisme: الكل</option>';
+    orgOptionIds().forEach(function(id){ f += '<option value="' + escapeHtml(id) + '">' + escapeHtml(id + ' - ' + orgLabel(id)) + '</option>'; });
+    orgFilter.innerHTML = f; orgFilter.value = cur;
+    const sel = document.getElementById('newOrganisme'); const curN = sel.value; let h = '<option value="">— بدون —</option>';
+    orgOptionIds().forEach(function(id){ h += '<option value="' + escapeHtml(id) + '">' + escapeHtml(id + ' - ' + orgLabel(id)) + '</option>'; });
+    sel.innerHTML = h; sel.value = curN;
+}
 const PAGE_SIZE = 60; let filteredPlaces = places; let currentPage = 1; let showAll = false;
 
 function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 function updateStats(){ statPlaces.textContent = Object.keys(codeNames).length.toLocaleString('en-US'); statRoutes.textContent = records.length.toLocaleString('en-US'); statShown.textContent = filteredPlaces.length.toLocaleString('en-US'); }
 
 function applyFilter(query){
-    query = (query || '').trim().toLowerCase();
-    if(!query){ filteredPlaces = places; }
-    else { filteredPlaces = places.filter(function(p){ const code = p[0], name = (p[1] || '').toLowerCase(); return code.toLowerCase().includes(query) || name.includes(query); }); }
+    query = (query || '').trim().toLowerCase(); const orgSel = orgFilter.value;
+    filteredPlaces = places.filter(function(p){
+        if(orgSel && p[2] !== orgSel) return false;
+        if(!query) return true;
+        const code = p[0], name = (p[1] || '').toLowerCase(), org = (p[2] ? (p[2] + ' ' + orgLabel(p[2])) : '').toLowerCase();
+        return code.toLowerCase().includes(query) || name.includes(query) || org.includes(query);
+    });
     currentPage = 1; renderList();
 }
 
@@ -732,10 +772,11 @@ function renderList(){
     else {
         let html = '';
         pageItems.forEach(function(p){
-            const code = p[0], name = p[1];
+            const code = p[0], name = p[1], org = p[2] || '';
+            const orgHtml = org ? "<div class='place-org'><span class='org-lbl'>Organisme</span> " + escapeHtml(org) + " · " + escapeHtml(orgLabel(org)) + "</div>" : "<div class='place-org none'><span class='org-lbl'>Organisme</span> —</div>";
             const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
             const editBtn = userIsAdmin ? "<button type='button' class='edit-btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>✎ تعديل</button>" : '';
-            html += "<div class='place-card'><div class='place-code'>" + escapeHtml(code) + "</div><div class='place-name'>" + escapeHtml(name || '—') + "</div>" + editBtn + "</div>";
+            html += "<div class='place-card'><div class='place-code'>" + escapeHtml(code) + "</div><div class='place-name'>" + escapeHtml(name || '—') + "</div>" + orgHtml + editBtn + "</div>";
         });
         listBody.innerHTML = html;
     }
@@ -754,7 +795,8 @@ function renderPagination(current, totalPages){
 }
 function goToPage(p){ currentPage = p; renderList(); }
 listSearch.addEventListener('input', function(){ applyFilter(listSearch.value); });
-btnClearSearch.addEventListener('click', function(){ listSearch.value = ''; applyFilter(''); });
+orgFilter.addEventListener('change', function(){ applyFilter(listSearch.value); });
+btnClearSearch.addEventListener('click', function(){ listSearch.value = ''; orgFilter.value = ''; applyFilter(''); });
 btnToggleShowAll.addEventListener('click', function(){ showAll = !showAll; this.textContent = showAll ? 'عرض بالصفحات' : 'عرض الكل'; this.classList.toggle('active', showAll); currentPage = 1; renderList(); });
 
 // إضافة / تعديل
@@ -763,12 +805,13 @@ const addPlaceStatus = document.getElementById('addPlaceStatus');
 const addPlaceTitle = document.getElementById('addPlaceTitle');
 const newCodeInput = document.getElementById('newCode');
 const newNameInput = document.getElementById('newName');
+const newOrgInput = document.getElementById('newOrganisme');
 const btnSubmitPlace = document.getElementById('btnSubmitPlace');
 const btnCancelEdit = document.getElementById('btnCancelEdit');
 let editingCode = null;
 
 function setAddPlaceStatus(type, msg){ if(!type){ addPlaceStatus.style.display = 'none'; return; } addPlaceStatus.className = 'status ' + type; addPlaceStatus.textContent = msg; }
-function enterEditMode(code){ editingCode = code; newCodeInput.value = code; newCodeInput.disabled = true; newNameInput.value = codeNames[code] || ''; addPlaceTitle.textContent = 'تعديل المكان: ' + code; btnSubmitPlace.textContent = 'حفظ التعديل'; btnCancelEdit.style.display = ''; setAddPlaceStatus(null); switchTab('tab-add'); newNameInput.focus(); }
+function enterEditMode(code){ editingCode = code; newCodeInput.value = code; newCodeInput.disabled = true; newNameInput.value = codeNames[code] || ''; newOrgInput.value = organismeById[code] || ''; addPlaceTitle.textContent = 'تعديل المكان: ' + code; btnSubmitPlace.textContent = 'حفظ التعديل'; btnCancelEdit.style.display = ''; setAddPlaceStatus(null); switchTab('tab-add'); newNameInput.focus(); }
 function exitEditMode(){ editingCode = null; newCodeInput.disabled = false; addPlaceTitle.textContent = 'إضافة مكان جديد'; btnSubmitPlace.textContent = 'إضافة المكان'; btnCancelEdit.style.display = 'none'; addPlaceForm.reset(); switchTab('tab-list'); }
 function startEditPlace(code){ if(!(window.__isAdmin && window.__isAdmin())) return; if(!Object.prototype.hasOwnProperty.call(codeNames, code)) return; enterEditMode(code); }
 btnCancelEdit.addEventListener('click', function(){ exitEditMode(); setAddPlaceStatus(null); });
@@ -779,17 +822,19 @@ addPlaceForm.addEventListener('submit', function(e){
     const code = editingCode ? editingCode : newCodeInput.value.trim(); const name = newNameInput.value.trim();
     if(!code || !name){ setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.'); return; }
     const isUpdate = editingCode !== null || Object.prototype.hasOwnProperty.call(codeNames, code);
-    codeNames[code] = name; customPlaces[code] = name; const saved = saveCustomPlaces(customPlaces);
+    const orgVal = newOrgInput.value; organismeById[code] = orgVal;
+    codeNames[code] = name; customPlaces[code] = name; customOrg[code] = orgVal; const saved = saveCustomPlaces(customPlaces) && saveCustomOrg(customOrg);
     const escapedCode = code.replace(/'/g, "\\'");
     let existingOpt = datalist.querySelector("option[value='" + escapedCode + "']");
     if(!existingOpt){ const opt = document.createElement('option'); opt.value = code; opt.textContent = code + ' - ' + name; datalist.appendChild(opt); } else { existingOpt.textContent = code + ' - ' + name; }
     const idx = places.findIndex(function(p){ return p[0] === code; });
-    if(idx >= 0){ places[idx][1] = name; } else { places.push([code, name]); }
+    if(idx >= 0){ places[idx][1] = name; places[idx][2] = orgVal; } else { places.push([code, name, orgVal]); }
     places.sort(function(x, y){ return x[0].localeCompare(y[0]); });
     applyFilter(listSearch.value); const wasEditing = editingCode !== null;
     if(!saved) setAddPlaceStatus('warn', 'تم الحفظ محلياً فقط.'); else if(wasEditing || isUpdate) setAddPlaceStatus('ok', 'تم تحديث اسم المكان بنجاح.'); else setAddPlaceStatus('ok', 'تمت إضافة المكان بنجاح.');
     if(wasEditing) exitEditMode(); else addPlaceForm.reset();
 });
+fillOrgSelects();
 renderList();
 
 // رفع الملف + GitHub API
@@ -954,6 +999,7 @@ renderList();
 
     function applyUploadedData(newData){
         customPlaces = {}; try { localStorage.removeItem(CUSTOM_PLACES_KEY); } catch(e){}
+        customOrg = {}; try { localStorage.removeItem(CUSTOM_ORG_KEY); } catch(e){}
         codeNamesArr.length = 0; Array.prototype.push.apply(codeNamesArr, newData.codeNamesArr);
         lieu.length = 0; Array.prototype.push.apply(lieu, newData.lieu);
         if (typeof distance !== 'undefined') { distance.length = 0; Array.prototype.push.apply(distance, newData.distance); }
@@ -962,14 +1008,16 @@ renderList();
         if(Array.isArray(newData.operation) && typeof operation !== 'undefined'){ operation.length = 0; Array.prototype.push.apply(operation, newData.operation); }
         
         Object.keys(codeNames).forEach(function(k){ delete codeNames[k]; });
-        lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; });
+        Object.keys(organismeById).forEach(function(k){ delete organismeById[k]; });
+        lieu.forEach(function(item){ if(item[1]){ codeNames[item[0]] = item[1]; organismeById[item[0]] = String(item[2] == null ? '' : item[2]).trim(); } });
         codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
         Object.keys(distanceMap).forEach(function(k){ delete distanceMap[k]; });
         records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
         
         rebuildDatalist();
         places.length = 0;
-        Array.prototype.push.apply(places, Object.keys(codeNames).map(function(code){ return [code, codeNames[code]]; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }));
+        Array.prototype.push.apply(places, buildPlaces());
+        fillOrgSelects();
         applyFilter(listSearch.value);
     }
 })();
