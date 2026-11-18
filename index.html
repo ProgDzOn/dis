@@ -402,7 +402,7 @@ input[type="text"], input[type="search"], input[type="password"]{ color:#fff !im
         </div>
         <div class="list-toolbar">
             <input type="search" id="listSearch" placeholder="🔍 بحث بالكود أو الاسم أو Organisme...">
-            <select id="orgFilter" aria-label="Organisme"><option value="">Organisme: الكل</option></select>
+            <select id="orgFilter" aria-label="Organisme"><option value="">Organisme (CCLS): الكل</option></select>
             <button class="btn" id="btnClearSearch">مسح</button>
             <button class="btn" id="btnToggleShowAll">عرض الكل</button>
         </div>
@@ -660,14 +660,11 @@ tabButtons.forEach(function(btn){ btn.addEventListener('click', function(){ swit
 
 // تجهيز البيانات
 const codeNames = {};
-// Organisme: الخانة الثالثة في lieu هي رقم الـ Organisme. التسميات أدناه استنتجتها من أسماء الأماكن — عدّلها حسب جدول organisme الفعلي عندكم.
-const ORGANISME_LABELS = {
-    '1':'Dock / Silo', '2':'Magasin / Station', '3':'Gare', '4':'Moulin', '5':'ERIAD',
-    '6':'Producteur', '7':'Port', '8':'Décharge', '9':'Client divers', '10':'Parc', '11':'Autre'
-};
-function orgLabel(id){ id = String(id == null ? '' : id).trim(); if(!id) return ''; return ORGANISME_LABELS[id] ? ORGANISME_LABELS[id] : ('Organisme ' + id); }
+// Organisme = الـ CCLS التابع له المكان: كل مكان كوده يبدأ بنفس أول 3 أرقام من كود الـ CCLS (مثال: 306015 ← 306000 "CCLS OUM EL BOUAGHI")
 const organismeById = {};
-if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]){ codeNames[item[0]] = item[1]; organismeById[item[0]] = String(item[2] == null ? '' : item[2]).trim(); } }); }
+function orgLabel(id){ id = String(id == null ? '' : id).trim(); return id ? (codeNames[id] || id) : ''; }
+
+if(typeof lieu !== 'undefined'){ lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; }); }
 codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
 
 const CUSTOM_PLACES_KEY = 'customPlaces_v1';
@@ -679,7 +676,14 @@ const CUSTOM_ORG_KEY = 'customOrganismes_v1';
 function loadCustomOrg(){ try{ const raw = localStorage.getItem(CUSTOM_ORG_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
 function saveCustomOrg(obj){ try{ localStorage.setItem(CUSTOM_ORG_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; } }
 let customOrg = loadCustomOrg();
-Object.keys(customOrg).forEach(function(code){ organismeById[code] = customOrg[code]; });
+function cclsCodes(){ return Object.keys(codeNames).filter(function(c){ return /^\d{3}000$/.test(c) && /^CCLS\b/i.test(codeNames[c]); }); }
+function recomputeOrg(){
+    Object.keys(organismeById).forEach(function(k){ delete organismeById[k]; });
+    const set = {}; cclsCodes().forEach(function(c){ set[c] = 1; });
+    Object.keys(codeNames).forEach(function(code){ if(/^\d{6}$/.test(code)){ const pref = code.slice(0, 3) + '000'; if(set[pref]) organismeById[code] = pref; } });
+    Object.keys(customOrg).forEach(function(code){ if(customOrg[code]) organismeById[code] = customOrg[code]; });
+}
+recomputeOrg();
 
 const distanceMap = {};
 records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
@@ -735,13 +739,13 @@ const statShown = document.getElementById('statShown');
 function buildPlaces(){ return Object.keys(codeNames).map(function(code){ return [code, codeNames[code], organismeById[code] || '']; }).sort(function(x, y){ return x[0].localeCompare(y[0]); }); }
 const places = buildPlaces();
 const orgFilter = document.getElementById('orgFilter');
-function orgOptionIds(){ const ids = {}; Object.keys(ORGANISME_LABELS).forEach(function(k){ ids[k] = 1; }); Object.keys(organismeById).forEach(function(c){ if(organismeById[c]) ids[organismeById[c]] = 1; }); return Object.keys(ids).sort(function(a, b){ return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0); }); }
+function orgOptionIds(){ return cclsCodes().sort(function(a, b){ return codeNames[a].localeCompare(codeNames[b]); }); }
 function fillOrgSelects(){
-    const cur = orgFilter.value; let f = '<option value="">Organisme: الكل</option>';
-    orgOptionIds().forEach(function(id){ f += '<option value="' + escapeHtml(id) + '">' + escapeHtml(id + ' - ' + orgLabel(id)) + '</option>'; });
+    const cur = orgFilter.value; let f = '<option value="">Organisme (CCLS): الكل</option>';
+    orgOptionIds().forEach(function(id){ f += '<option value="' + escapeHtml(id) + '">' + escapeHtml(orgLabel(id)) + '</option>'; });
     orgFilter.innerHTML = f; orgFilter.value = cur;
     const sel = document.getElementById('newOrganisme'); const curN = sel.value; let h = '<option value="">— بدون —</option>';
-    orgOptionIds().forEach(function(id){ h += '<option value="' + escapeHtml(id) + '">' + escapeHtml(id + ' - ' + orgLabel(id)) + '</option>'; });
+    orgOptionIds().forEach(function(id){ h += '<option value="' + escapeHtml(id) + '">' + escapeHtml(orgLabel(id)) + '</option>'; });
     sel.innerHTML = h; sel.value = curN;
 }
 const PAGE_SIZE = 60; let filteredPlaces = places; let currentPage = 1; let showAll = false;
@@ -754,7 +758,7 @@ function applyFilter(query){
     filteredPlaces = places.filter(function(p){
         if(orgSel && p[2] !== orgSel) return false;
         if(!query) return true;
-        const code = p[0], name = (p[1] || '').toLowerCase(), org = (p[2] ? (p[2] + ' ' + orgLabel(p[2])) : '').toLowerCase();
+        const code = p[0], name = (p[1] || '').toLowerCase(), org = (p[2] ? orgLabel(p[2]) : '').toLowerCase();
         return code.toLowerCase().includes(query) || name.includes(query) || org.includes(query);
     });
     currentPage = 1; renderList();
@@ -773,7 +777,7 @@ function renderList(){
         let html = '';
         pageItems.forEach(function(p){
             const code = p[0], name = p[1], org = p[2] || '';
-            const orgHtml = org ? "<div class='place-org'><span class='org-lbl'>Organisme</span> " + escapeHtml(org) + " · " + escapeHtml(orgLabel(org)) + "</div>" : "<div class='place-org none'><span class='org-lbl'>Organisme</span> —</div>";
+            const orgHtml = org ? "<div class='place-org'><span class='org-lbl'>Organisme</span> " + escapeHtml(orgLabel(org)) + "</div>" : "<div class='place-org none'><span class='org-lbl'>Organisme</span> —</div>";
             const codeAttr = escapeHtml(code).replace(/"/g, '&quot;');
             const editBtn = userIsAdmin ? "<button type='button' class='edit-btn' data-code=\"" + codeAttr + "\" onclick='startEditPlace(this.getAttribute(\"data-code\"))'>✎ تعديل</button>" : '';
             html += "<div class='place-card'><div class='place-code'>" + escapeHtml(code) + "</div><div class='place-name'>" + escapeHtml(name || '—') + "</div>" + orgHtml + editBtn + "</div>";
@@ -822,7 +826,7 @@ addPlaceForm.addEventListener('submit', function(e){
     const code = editingCode ? editingCode : newCodeInput.value.trim(); const name = newNameInput.value.trim();
     if(!code || !name){ setAddPlaceStatus('error', 'الرجاء إدخال الكود واسم المكان.'); return; }
     const isUpdate = editingCode !== null || Object.prototype.hasOwnProperty.call(codeNames, code);
-    const orgVal = newOrgInput.value; organismeById[code] = orgVal;
+    let orgVal = newOrgInput.value; if(!orgVal){ const pref = code.slice(0, 3) + '000'; if(/^\d{6}$/.test(code) && Object.prototype.hasOwnProperty.call(codeNames, pref) && /^CCLS\b/i.test(codeNames[pref])) orgVal = pref; } organismeById[code] = orgVal;
     codeNames[code] = name; customPlaces[code] = name; customOrg[code] = orgVal; const saved = saveCustomPlaces(customPlaces) && saveCustomOrg(customOrg);
     const escapedCode = code.replace(/'/g, "\\'");
     let existingOpt = datalist.querySelector("option[value='" + escapedCode + "']");
@@ -1008,9 +1012,9 @@ renderList();
         if(Array.isArray(newData.operation) && typeof operation !== 'undefined'){ operation.length = 0; Array.prototype.push.apply(operation, newData.operation); }
         
         Object.keys(codeNames).forEach(function(k){ delete codeNames[k]; });
-        Object.keys(organismeById).forEach(function(k){ delete organismeById[k]; });
-        lieu.forEach(function(item){ if(item[1]){ codeNames[item[0]] = item[1]; organismeById[item[0]] = String(item[2] == null ? '' : item[2]).trim(); } });
+        lieu.forEach(function(item){ if(item[1]) codeNames[item[0]] = item[1]; });
         codeNamesArr.forEach(function(item){ if(!codeNames[item[0]]) codeNames[item[0]] = item[1]; });
+        recomputeOrg();
         Object.keys(distanceMap).forEach(function(k){ delete distanceMap[k]; });
         records.forEach(function(r){ distanceMap[r[0] + '|' + r[1]] = r[2]; });
         
